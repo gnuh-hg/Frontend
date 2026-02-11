@@ -1,36 +1,9 @@
 [
   {
-    "id": "f1770807023093",
-    "name": "a",
+    "id": "f1770820191655",
+    "name": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
     "type": "FOLDER",
     "parent_id": null,
-    "position": 0,
-    "color": "#ffffff",
-    "expanded": true
-  },
-  {
-    "id": "p1770807026365",
-    "name": "b",
-    "type": "PROJECT",
-    "parent_id": "f1770807023093",
-    "position": 0,
-    "color": "rgb(184, 50, 128)",
-    "expanded": false
-  },
-  {
-    "id": "f1770807202075",
-    "name": "bư",
-    "type": "FOLDER",
-    "parent_id": null,
-    "position": 1,
-    "color": "#ffffff",
-    "expanded": true
-  },
-  {
-    "id": "p1770807294081",
-    "name": "ưab",
-    "type": "PROJECT",
-    "parent_id": "f1770807202075",
     "position": 0,
     "color": "#ffffff",
     "expanded": false
