@@ -1,0 +1,135 @@
+.workspace {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    margin: 5px;
+    width: 100%;
+    /* width: calc(50% - 10px); */
+    height: calc(100vh - 60px);
+}
+
+.name-folder {
+    margin: 15px;
+    margin-left: 0;
+    font-size: 30px;
+}
+
+.stats-container {
+    display: flex;
+    justify-content: space-around; /* Chia đều khoảng cách giữa các mục */
+    align-items: center;
+    padding: 20px 0;
+    background-color: #1a1a20; /* Màu nền tối như trong ảnh */
+    border-radius: 8px;
+    margin: 5px;
+}
+
+.stat-item {
+    text-align: center;
+    flex: 1; /* Mỗi mục chiếm 1 phần bằng nhau */
+}
+
+.stat-value {
+    color: #ef5541; /* Màu đỏ cam như ảnh */
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.stat-label {
+    color: #949ba4; /* Màu chữ xám nhạt */
+    font-size: 13px;
+    margin-top: 5px;
+}
+
+.unit {
+    color: #949ba4;
+    font-size: 10px;
+}
+
+.task-input-wrapper {
+    padding: 15px;
+}
+
+.input-group {
+    display: flex;
+    align-items: center;
+    background-color: #24242a;
+    padding: 10px 15px;
+    border-radius: 6px;
+    border: 1px solid #3f4147;
+}
+
+.plus-icon {
+    color: #949ba4;
+    margin-right: 10px;
+    font-size: 20px;
+}
+
+.input-group input {
+    background: transparent;
+    border: none;
+    color: white;
+    width: 100%;
+    outline: none;
+}
+
+.task-list-content {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.empty-state p {
+    color: #4e5058;
+    font-size: 14px;
+}
+
+.btn-toggle-completed {
+    display: block;
+    margin: 20px auto;
+    background-color: #2b2d31;
+    color: #8a8a8e;
+    border: none;
+    padding: 6px 15px;
+    border-radius: 15px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.task-container {
+    /* border: 1px solid white; */
+    display: flex;
+    margin: 5px;
+    width: 100%;
+    margin-bottom: auto;
+}
+
+.task-list {
+    width: 100%;
+    min-height: 5px;
+    list-style: none;
+    color: #dbdee1;
+    font-size: 14px;
+    outline: none;
+    margin: 0;
+    padding: 0;
+}
+
+.task-list li {
+    /* border: 1px solid white; */
+    background-color: #1a1a20;
+    border-radius: 7px;
+    width: 100%;
+    padding: 10px;
+    margin: 6px 0px;
+    display: flex;
+}
+
+.status {
+    height: 16px;
+    width: 16px;
+    border: 1px solid white;
+    border-radius: 8px;
+    margin-right: 5px;
+}

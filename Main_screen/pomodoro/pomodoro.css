@@ -1,0 +1,11 @@
+.pomodoro {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    margin: 5px;
+    width: calc(30% - 10px);
+    height: calc(100vh - 60px);
+    border: 1px solid white;
+    display: none;
+}
+
