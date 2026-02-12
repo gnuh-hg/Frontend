@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentSelectedItem = null; 
 
     async function fetchWithAuth(url, options = {}) {
-        const token = localStorage.getItem('access_token'); // Lấy token từ lúc đăng nhập
+        const token = localStorage.getItem('access_token');
         const defaultHeaders = {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -24,11 +24,12 @@ document.addEventListener('DOMContentLoaded', function() {
             headers: { ...defaultHeaders, ...options.headers }
         });
 
-        // if (!response.ok === 401) {
-        //     alert("Phiên làm việc hết hạn. Vui lòng đăng nhập lại.");
-        //     window.location.href = "../Account/login.html"; // Chuyển hướng nếu token sai/hết hạn
-        //     return;
-        // }
+        // SỬA LỖI LOGIC CHECK 401
+        if (response.status === 401) {
+            alert("Phiên làm việc hết hạn. Vui lòng đăng nhập lại.");
+            // window.location.href = "../Account/login.html"; 
+            return response; // Trả về để tránh code phía sau crash
+        }
         return response;
     }
 
@@ -38,7 +39,8 @@ document.addEventListener('DOMContentLoaded', function() {
     async function loadData() {
         try {
             // SỬA: Dùng Config.URL_API
-            const response = await fetchWithAuth(`${Config.URL_API}/data`);
+            const response = await fetchWithAuth(`${Config.URL_API}/items`); 
+            if (!response.ok) return;
             const items = await response.json();
             
             items.sort((a, b) => a.position - b.position);
@@ -87,8 +89,7 @@ document.addEventListener('DOMContentLoaded', function() {
         traverse(mainListWrapper);
 
         try {
-            // SỬA: Dùng Config.URL_API
-            await fetchWithAuth(`${Config.URL_API}/save-all`, {
+            await fetchWithAuth(`${Config.URL_API}/items/save-all`, { 
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(items)
@@ -198,7 +199,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!name) return;
 
         const newItem = {
-            id: (isFolder ? 'f' : 'p') + Date.now(),
             name: name, type: isFolder ? "FOLDER" : "PROJECT",
             color: color, parent_id: null, position: mainListWrapper.children.length, expanded: false
         };
