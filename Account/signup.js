@@ -1,4 +1,4 @@
-import * as Config from '../../constants.js';
+import * as Config from './../constants.js';
 
 document.addEventListener('DOMContentLoaded', function() {
     const name = document.querySelector('.name')
