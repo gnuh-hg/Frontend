@@ -3,29 +3,26 @@
     <head>
         <title>Focus to-do</title>
         <link rel="stylesheet" href="./home.css" />
-        <link rel="stylesheet" href="./app_header/app_header.css" />
-        <link rel="stylesheet" href="./sidebar_nav/sidebar_nav.css" />
-        <link rel="stylesheet" href="./workspace/workspace.css" />
-        <link rel="stylesheet" href="./pomodoro/pomodoro.css">
-
         <script type="module" src="./home.js" defer></script>
+
+        <link rel="stylesheet" href="./app_header/app_header.css" />
+        <script type="module" src="./app_header/app_header.js" defer></script>
+
+        <link rel="stylesheet" href="./sidebar_nav/sidebar_nav.css" />
         <script type="module" src="./sidebar_nav/sidebar_nav.js" defer></script>
+
+        <link rel="stylesheet" href="./workspace/workspace.css" />
         <script src="./workspace/workspace.js" defer></script>
+
+        <link rel="stylesheet" href="./pomodoro/pomodoro.css">
+        
         <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     </head>
     <body>
         <div class="app-header">
             <div class="user-profile">
-                <img class="avatar" src="https://scontent.fhan15-2.fna.fbcdn.net/v/t1.15752-9/623393349_1582951956083629_4002126118238826538_n.jpg?stp=dst-jpg_s2048x2048_tt6&_nc_cat=100&ccb=1-7&_nc_sid=9f807c&_nc_eui2=AeEZ6rBdmJ5Fw3zQ5glGX1d0cHNcFV0WXJZwc1wVXRZcltIWCa2sXDE_xheU2DISJNZ8eMSU5nFWeX3JXSSU6Gl3&_nc_ohc=8zuPeU86wOAQ7kNvwH9-pww&_nc_oc=AdkLQ7NqFLA1fxxDXPFsmNMQ_Du5nemGW0T_2UfGmQZ_DMIx1e3BGjYkcRRb39W7_b8uamApUHA07zhnxG5XYvkk&_nc_zt=23&_nc_ht=scontent.fhan15-2.fna&oh=03_Q7cD4gH8kY6m8TWt5uTFxvrSj_Dq9-0BQFUHIkzYmkJZICQ30w&oe=69A92C4E" width="50px" height="50px"/>
-                <p class="username">Name</p>
-            </div>
-            <div class="modal-overlay-account">
-                <div class="modal-login">
-                    <img class="logo-web" src="../logo_web.png">
-                </div>
-                <div class="modal-register">
-                    <img class="logo-web" src="../logo_web.png">
-                </div>
+                <img class="logo-web" src="../logo_web.png" width="50px" height="50px"/>
+                <p class="username">Username</p>
             </div>
 
             <ul class="header-nav">
@@ -231,7 +228,6 @@
                 </button>
             </div>
             <div class="pomodoro">
-
             </div>
         </div>
     </body>
