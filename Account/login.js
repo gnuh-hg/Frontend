@@ -10,16 +10,17 @@ document.addEventListener('DOMContentLoaded', function() {
         const email = email_input.value.trim();
         const password = password_input.value.trim();
 
+        const formData = new URLSearchParams();
+        formData.append('email', email);
+        formData.append('password', password);
+
         try {
             const response = await fetch(`${Config.URL_API}/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
-                body: JSON.stringify({ 
-                    email: email, 
-                    password: password 
-                }),
+                body: formData,
             });
 
             const data = await response.json();

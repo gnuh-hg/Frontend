@@ -8,22 +8,23 @@ document.addEventListener('DOMContentLoaded', function() {
     const warning = document.querySelector('.warning');
 
     // 3. Gán sự kiện click cho nút LOGIN
-    document.querySelector('.login').addEventListener('click', async function () {
+    document.querySelector('.signup').addEventListener('click', async function () {
         const name = name_input.value.trim();
         const email = email_input.value.trim();
         const password = password_input.value.trim();
 
+        const formData = new URLSearchParams();
+        formData.append('username', name);
+        formData.append('email', email);
+        formData.append('password', password);
+
         try {
-            const response = await fetch(`${Config.URL_API}/login`, {
+            const response = await fetch(`${Config.URL_API}/signup`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
-                body: JSON.stringify({ 
-                    username: name,
-                    email: email, 
-                    password: password 
-                }),
+                body: formData,
             });
 
             const data = await response.json();
