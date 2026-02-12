@@ -12,13 +12,33 @@ document.addEventListener('DOMContentLoaded', function() {
     
     let currentSelectedItem = null; 
 
+    async function fetchWithAuth(url, options = {}) {
+        const token = localStorage.getItem('access_token'); // Lấy token từ lúc đăng nhập
+        const defaultHeaders = {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        };
+
+        const response = await fetch(url, {
+            ...options,
+            headers: { ...defaultHeaders, ...options.headers }
+        });
+
+        // if (!response.ok === 401) {
+        //     alert("Phiên làm việc hết hạn. Vui lòng đăng nhập lại.");
+        //     window.location.href = "../Account/login.html"; // Chuyển hướng nếu token sai/hết hạn
+        //     return;
+        // }
+        return response;
+    }
+
     // --- 2. QUẢN LÝ DỮ LIỆU (API CALLS DÙNG CONSTANTS) ---
 
     // Load dữ liệu ban đầu
     async function loadData() {
         try {
             // SỬA: Dùng Config.URL_API
-            const response = await fetch(`${Config.URL_API}/data`);
+            const response = await fetchWithAuth(`${Config.URL_API}/data`);
             const items = await response.json();
             
             items.sort((a, b) => a.position - b.position);
@@ -68,7 +88,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         try {
             // SỬA: Dùng Config.URL_API
-            await fetch(`${Config.URL_API}/save-all`, {
+            await fetchWithAuth(`${Config.URL_API}/save-all`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(items)
@@ -138,7 +158,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 item.querySelector('.icon-collapsed').style.display = isExpanded ? 'none' : 'block';
                 
                 // SỬA: Dùng Config.URL_API
-                await fetch(`${Config.URL_API}/items/${item.getAttribute('data-id')}`, {
+                await fetchWithAuth(`${Config.URL_API}/items/${item.getAttribute('data-id')}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ expanded: isExpanded })
@@ -184,7 +204,7 @@ document.addEventListener('DOMContentLoaded', function() {
         };
 
         // SỬA: Dùng Config.URL_API
-        const res = await fetch(`${Config.URL_API}/items`, {
+        const res = await fetchWithAuth(`${Config.URL_API}/items`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(newItem)
@@ -207,7 +227,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!newName) return;
 
         // SỬA: Dùng Config.URL_API
-        const res = await fetch(`${Config.URL_API}/items/${id}`, {
+        const res = await fetchWithAuth(`${Config.URL_API}/items/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name: newName, color: newColor })
@@ -227,7 +247,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const id = currentSelectedItem.getAttribute('data-id');
 
         // SỬA: Dùng Config.URL_API
-        const res = await fetch(`${Config.URL_API}/items/${id}`, { method: 'DELETE' });
+        const res = await fetchWithAuth(`${Config.URL_API}/items/${id}`, { method: 'DELETE' });
         if (res.ok) {
             currentSelectedItem.remove();
             closeModals();

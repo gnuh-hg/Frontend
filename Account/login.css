@@ -31,7 +31,7 @@ body {
     margin: 40px;
 }
 
-.email-form, .password-form {
+.user-email, .user-password {
     background-color: transparent;
     padding: 10px;
 }
@@ -58,6 +58,11 @@ body {
     cursor: pointer;
 }
 
+.warning {
+    color: #ff3333;
+    font-size: 13px;
+}
+
 a {
     width: 90%;
     padding: 5px;
@@ -68,7 +73,6 @@ a {
 }
 
 .signup {
-    /* border: 1px solid white; */
     text-align: center;
     font-size: 15px;
     margin-left: auto;

@@ -31,7 +31,7 @@ body {
     margin: 40px;
 }
 
-.name, .email-form, .password-form {
+.user-name, .user-email, .user-password {
     background-color: transparent;
     padding: 10px;
 }
@@ -56,6 +56,11 @@ body {
     text-align: center;
     border-radius: 15px;
     cursor: pointer;
+}
+
+.warning {
+    color: #ff3333;
+    font-size: 13px;
 }
 
 a {
