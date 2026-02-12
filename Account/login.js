@@ -1,26 +1,35 @@
 import * as Config from './../constants.js';
 
 document.addEventListener('DOMContentLoaded', function() {
-    // 1. Truy vấn các phần tử DOM
     const email_input = document.querySelector('.user-email input');
     const password_input = document.querySelector('.user-password input');
+    const warning = document.querySelector('.warning');
+    const login_btn = document.querySelector('.login');
 
-    // 3. Gán sự kiện click cho nút LOGIN
-    document.querySelector('.login').addEventListener('click', async function () {
+    login_btn.addEventListener('click', async function (e) {
+        e.preventDefault();
+
         const email = email_input.value.trim();
         const password = password_input.value.trim();
 
-        const formData = new URLSearchParams();
-        formData.append('email', email);
-        formData.append('password', password);
+        if (!email || !password) {
+            warning.innerHTML = "Vui lòng nhập đầy đủ thông tin";
+            return;
+        }
+
+        // Gửi JSON với key là 'email' đúng như bạn muốn
+        const loginData = {
+            email: email,
+            password: password
+        };
 
         try {
             const response = await fetch(`${Config.URL_API}/login`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Content-Type': 'application/json', // Chuyển sang JSON
                 },
-                body: formData,
+                body: JSON.stringify(loginData),
             });
 
             const data = await response.json();
@@ -28,10 +37,13 @@ document.addEventListener('DOMContentLoaded', function() {
             if (response.ok) {
                 localStorage.setItem('access_token', data.access_token);
                 window.location.href = "../Main_screen/home.html";
-            } else warning.innerHTML = data.detail;
+            } else {
+                warning.innerHTML = data.detail;
+            }
 
         } catch (error) {
-            console.error('Lỗi:', error.message);
+            console.error('Lỗi:', error);
+            warning.innerHTML = "Lỗi kết nối!";
         }
     });
 });
