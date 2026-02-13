@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     let currentSelectedItem = null;
     let isSaving = false; // Flag để tránh race condition
+    let isRedirecting = false;
 
     // --- FETCHAUTH ĐÃ SỬA ---
     async function fetchWithAuth(url, options = {}) {
@@ -27,8 +28,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         if (response.status === 401) {
-            alert("Phiên làm việc hết hạn. Vui lòng đăng nhập lại.");
-            window.location.href = "../Account/login.html";
+            if (!isRedirecting) {  // ✅ Thêm check này
+                isRedirecting = true;
+                alert("Phiên làm việc hết hạn. Vui lòng đăng nhập lại.");
+                window.location.href = "../Account/login.html";
+            }
             throw new Error("Unauthorized"); // Ngăn code tiếp tục chạy
         }
         
@@ -93,13 +97,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     const isExpanded = li.classList.contains('is-expanded');
 
                     items.push({
-                        id: id, 
-                        name: name, 
+                        id: id ? String(id) : '',
+                        name: name ? String(name) : '',  // Hoặc dùng giá trị mặc định
                         type: isFolder ? "FOLDER" : "PROJECT",
-                        parent_id: parentId, 
-                        position: index, 
-                        color: color, 
-                        expanded: isExpanded
+                        parent_id: parentId ? String(parentId) : null,
+                        position: parseInt(index) || 0,
+                        color: color || "#ffffff",
+                        expanded: Boolean(isExpanded)
                     });
 
                     if (isFolder) {
@@ -113,7 +117,6 @@ document.addEventListener('DOMContentLoaded', function() {
             try {
                 const response = await fetchWithAuth(`${Config.URL_API}/items/save-all`, { 
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(items)
                 });
                 
@@ -194,7 +197,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 try {
                     const response = await fetchWithAuth(`${Config.URL_API}/items/${item.getAttribute('data-id')}`, {
                         method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ expanded: isExpanded })
                     });
                     
@@ -266,7 +268,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 input.value = '';
                 closeModals();
             } else {
-                alert("Không thể tạo mục mới");
+                const errorData = await res.json();
+                alert(`Không thể tạo mục mới: ${errorData.detail || 'Lỗi không xác định'}`);
             }
         } catch (err) {
             console.error("Lỗi khi tạo item:", err);
@@ -312,12 +315,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const id = currentSelectedItem.getAttribute('data-id');
         const isFolder = currentSelectedItem.classList.contains('folder-item');
-        
-        // Cảnh báo nếu xóa folder
-        if (isFolder) {
-            const confirmDelete = confirm("Xóa folder sẽ xóa tất cả nội dung bên trong. Bạn có chắc chắn?");
-            if (!confirmDelete) return;
-        }
 
         try {
             const res = await fetchWithAuth(`${Config.URL_API}/items/${id}`, { 
