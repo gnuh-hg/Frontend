@@ -24,11 +24,10 @@ document.addEventListener('DOMContentLoaded', function() {
             headers: { ...defaultHeaders, ...options.headers }
         });
 
-        // SỬA LỖI LOGIC CHECK 401
         if (response.status === 401) {
             alert("Phiên làm việc hết hạn. Vui lòng đăng nhập lại.");
             // window.location.href = "../Account/login.html"; 
-            return response; // Trả về để tránh code phía sau crash
+            return response;
         }
         return response;
     }
@@ -38,7 +37,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load dữ liệu ban đầu
     async function loadData() {
         try {
-            // SỬA: Dùng Config.URL_API
             const response = await fetchWithAuth(`${Config.URL_API}/items`); 
             if (!response.ok) return;
             const items = await response.json();
@@ -62,7 +60,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Hàm lưu toàn bộ cấu trúc (Kéo thả)
     async function saveAllStructure() {
         const items = [];
         function traverse(wrapper, parentId = null) {
@@ -158,7 +155,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 item.querySelector('.icon-expanded').style.display = isExpanded ? 'block' : 'none';
                 item.querySelector('.icon-collapsed').style.display = isExpanded ? 'none' : 'block';
                 
-                // SỬA: Dùng Config.URL_API
                 await fetchWithAuth(`${Config.URL_API}/items/${item.getAttribute('data-id')}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
@@ -181,55 +177,68 @@ document.addEventListener('DOMContentLoaded', function() {
     if (mainListWrapper) new Sortable(mainListWrapper, sortableOptions);
 
     // --- 5. MODAL LOGIC ---
-
     function closeModals() {
         overlay.style.display = 'none';
         modalBox.style.display = 'none';
         modalMoreBox.style.display = 'none';
         currentSelectedItem = null; 
+        // Reset input sau khi đóng
+        document.querySelectorAll('.modal-input').forEach(i => i.value = '');
     }
-
-    // Thêm mới
+    
+    // CHỈ GIỮ LẠI MỘT HÀM XỬ LÝ THÊM MỚI DUY NHẤT NÀY
     document.querySelector('.modal-box .btn-accept').addEventListener('click', async function() {
         const isFolder = folderForm.style.display !== 'none';
         const input = isFolder ? folderForm.querySelector('.modal-input') : projectForm.querySelector('.modal-input');
         const name = input.value.trim();
         const color = document.querySelector('.modal-box .color-swatch.selected')?.style.backgroundColor || '#ffffff';
-        
+
         if (!name) return;
 
-        const newItem = {
-            name: name, type: isFolder ? "FOLDER" : "PROJECT",
-            color: color, parent_id: null, position: mainListWrapper.children.length, expanded: false
+        // Chuẩn bị dữ liệu gửi lên (Không kèm ID)
+        const newItemData = {
+            name: name, 
+            type: isFolder ? "FOLDER" : "PROJECT",
+            color: color, 
+            parent_id: null, 
+            position: mainListWrapper.children.length, 
+            expanded: false
         };
 
-        // SỬA: Dùng Config.URL_API
-        const res = await fetchWithAuth(`${Config.URL_API}/items`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(newItem)
-        });
+        try {
+            const res = await fetchWithAuth(`${Config.URL_API}/items`, {
+                method: 'POST',
+                body: JSON.stringify(newItemData)
+            });
 
-        if (res.ok) {
-            renderItem(newItem, mainListWrapper);
-            input.value = '';
-            closeModals();
+            if (res.ok) {
+                // QUAN TRỌNG: Lấy dữ liệu ĐÃ CÓ ID từ Backend trả về
+                const savedItemFromServer = await res.json(); 
+
+                // Render vào giao diện với ID thật
+                renderItem(savedItemFromServer, mainListWrapper); 
+
+                closeModals();
+            } else {
+                const errorData = await res.json();
+                alert("Lỗi: " + (errorData.detail || "Không thể tạo mục mới"));
+            }
+        } catch (err) {
+            console.error("Lỗi kết nối:", err);
         }
     });
 
-    // Sửa
+    // Sửa (Cập nhật tên và màu)
     document.querySelector('.modal-more-box .btn-accept').addEventListener('click', async function() {
         if (!currentSelectedItem) return;
         const id = currentSelectedItem.getAttribute('data-id');
         const newName = modalMoreBox.querySelector('.modal-input').value.trim();
         const newColor = modalMoreBox.querySelector('.color-swatch.selected')?.style.backgroundColor || '#ffffff';
 
-        if (!newName) return;
+        if (!newName || !id) return; // Kiểm tra ID để tránh lỗi 401/404
 
-        // SỬA: Dùng Config.URL_API
         const res = await fetchWithAuth(`${Config.URL_API}/items/${id}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name: newName, color: newColor })
         });
 
@@ -246,7 +255,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!currentSelectedItem) return;
         const id = currentSelectedItem.getAttribute('data-id');
 
-        // SỬA: Dùng Config.URL_API
         const res = await fetchWithAuth(`${Config.URL_API}/items/${id}`, { method: 'DELETE' });
         if (res.ok) {
             currentSelectedItem.remove();
