@@ -196,7 +196,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // SỬA: Kiểm tra response
                 try {
                     const response = await fetchWithAuth(`${Config.URL_API}/items/${item.getAttribute('data-id')}`, {
-                        method: 'PUT',
+                        method: 'PATCH',
                         body: JSON.stringify({ expanded: isExpanded })
                     });
                     
@@ -258,7 +258,6 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const res = await fetchWithAuth(`${Config.URL_API}/items`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(newItem)
             });
 
@@ -291,8 +290,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         try {
             const res = await fetchWithAuth(`${Config.URL_API}/items/${id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                method: 'PATCH',
                 body: JSON.stringify({ name: newName, color: newColor })
             });
 
@@ -374,3 +372,4 @@ document.addEventListener('DOMContentLoaded', function() {
 
     loadData();
 });
+
