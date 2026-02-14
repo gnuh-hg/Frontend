@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     const name = li.querySelector('p').innerText;
                     const isFolder = li.classList.contains('folder-item');
                     const iconPath = li.querySelector('.folder-icon path') || li.querySelector('.project-icon circle');
-                    const color = iconPath ? (iconPath.getAttribute('fill') || iconPath.style.fill) : '#ffffff';
+                    const color = rgbToHex(iconPath ? (iconPath.getAttribute('fill') || iconPath.style.fill) : '#ffffff');
                     const isExpanded = li.classList.contains('is-expanded');
 
                     items.push({
@@ -173,7 +173,7 @@ document.addEventListener('DOMContentLoaded', function() {
             currentSelectedItem = item; 
             const currentName = item.querySelector('p').innerText;
             const iconPath = item.querySelector('.folder-icon path') || item.querySelector('.project-icon circle');
-            const currentColor = iconPath ? (iconPath.getAttribute('fill') || iconPath.style.fill) : '#ffffff';
+            const currentColor = rgbToHex(iconPath ? (iconPath.getAttribute('fill') || iconPath.style.fill) : '#ffffff');
             
             overlay.style.display = 'flex';
             modalMoreBox.style.display = 'flex';
@@ -239,9 +239,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const isFolder = folderForm.style.display !== 'none';
         const input = isFolder ? folderForm.querySelector('.modal-input') : projectForm.querySelector('.modal-input');
         const name = input.value.trim();
-        const color = document.querySelector('.modal-box .color-swatch.selected')?.style.backgroundColor || '#ffffff';
+        const color = rgbToHex(document.querySelector('.modal-box .color-swatch.selected')?.style.backgroundColor || '#ffffff');
         
         if (!name) {
+            input.focus();
             alert("Vui lòng nhập tên!");
             return;
         }
@@ -281,9 +282,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const id = currentSelectedItem.getAttribute('data-id');
         const newName = modalMoreBox.querySelector('.modal-input').value.trim();
-        const newColor = modalMoreBox.querySelector('.color-swatch.selected')?.style.backgroundColor || '#ffffff';
+        const newColor = rgbToHex(modalMoreBox.querySelector('.color-swatch.selected')?.style.backgroundColor || '#ffffff');
 
         if (!newName) {
+            modalMoreBox.focus();
             alert("Vui lòng nhập tên!");
             return;
         }
@@ -370,6 +372,29 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    function rgbToHex(rgb) {
+        // Nếu đã là hex, return luôn
+        if (rgb.startsWith('#')) {
+            return rgb;
+        }
+
+        // Parse RGB string: "rgb(255, 0, 0)" → [255, 0, 0]
+        const values = rgb.match(/\d+/g);
+        if (!values || values.length < 3) {
+            return '#ffffff'; // Fallback
+        }
+
+        const r = parseInt(values[0]);
+        const g = parseInt(values[1]);
+        const b = parseInt(values[2]);
+
+        // Convert sang hex
+        return "#" + 
+            r.toString(16).padStart(2, '0') +
+            g.toString(16).padStart(2, '0') +
+            b.toString(16).padStart(2, '0');
+    }
+    
     loadData();
 });
 

@@ -184,8 +184,172 @@
                     </div>
                 </div>
             </div>
-            <div class="workspace">
 
+            <div class="container-task">
+              <h1>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="4" y="3" width="16" height="18" rx="2" stroke="#333" stroke-width="2"/>
+                  <line x1="8" y1="8" x2="16" y2="8" stroke="#333" stroke-width="2" stroke-linecap="round"/>
+                  <line x1="8" y1="12" x2="16" y2="12" stroke="#333" stroke-width="2" stroke-linecap="round"/>
+                  <line x1="8" y1="16" x2="13" y2="16" stroke="#333" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                Task Manager
+                <button class="btn-done" onclick="toggleDone(this)">New task</button>
+              </h1>
+
+              <div class="task-list">
+
+                <!-- Task 1 -->
+                <div class="task high">
+                  <div class="task-header">
+                    <div class="task-name">Hoàn thành báo cáo dự án Q1</div>
+                    <button class="btn-done" onclick="toggleDone(this)">Done</button>
+                  </div>
+
+                  <div class="task-deadline">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <rect x="4" y="5" width="16" height="16" rx="2" stroke="#6B7280" stroke-width="2" fill="white"/>
+                      <line x1="4" y1="9" x2="20" y2="9" stroke="#6B7280" stroke-width="2"/>
+                      <line x1="8" y1="3" x2="8" y2="6" stroke="#6B7280" stroke-width="2" stroke-linecap="round"/>
+                      <line x1="16" y1="3" x2="16" y2="6" stroke="#6B7280" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <span>Kết thúc: 20/02/2026</span>
+                  </div>
+
+                  <div class="task-progress">
+                    <div class="progress-bar-container">
+                      <div class="progress-bar-fill" style="width: 65%"></div>
+                    </div>
+                    <span class="progress-percent">65%</span>
+                  </div>
+                </div>
+
+                <!-- Task 2 -->
+                <div class="task medium">
+                  <div class="task-header">
+                    <div class="task-name">Cập nhật tài liệu API</div>
+                    <button class="btn-done" onclick="toggleDone(this)">Done</button>
+                  </div>
+
+                  <div class="task-deadline">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <rect x="4" y="5" width="16" height="16" rx="2" stroke="#6B7280" stroke-width="2" fill="white"/>
+                      <line x1="4" y1="9" x2="20" y2="9" stroke="#6B7280" stroke-width="2"/>
+                      <line x1="8" y1="3" x2="8" y2="6" stroke="#6B7280" stroke-width="2" stroke-linecap="round"/>
+                      <line x1="16" y1="3" x2="16" y2="6" stroke="#6B7280" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <span>Kết thúc: 25/02/2026</span>
+                  </div>
+
+                  <div class="task-progress">
+                    <div class="progress-bar-container">
+                      <div class="progress-bar-fill" style="width: 40%"></div>
+                    </div>
+                    <span class="progress-percent">40%</span>
+                  </div>
+                </div>
+
+                <!-- Task 3 -->
+                <div class="task low">
+                  <div class="task-header">
+                    <div class="task-name">Sắp xếp lại workspace</div>
+                    <button class="btn-done" onclick="toggleDone(this)">Done</button>
+                  </div>
+
+                  <div class="task-deadline">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <rect x="4" y="5" width="16" height="16" rx="2" stroke="#6B7280" stroke-width="2" fill="white"/>
+                      <line x1="4" y1="9" x2="20" y2="9" stroke="#6B7280" stroke-width="2"/>
+                      <line x1="8" y1="3" x2="8" y2="6" stroke="#6B7280" stroke-width="2" stroke-linecap="round"/>
+                      <line x1="16" y1="3" x2="16" y2="6" stroke="#6B7280" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <span>Kết thúc: 28/02/2026</span>
+                  </div>
+
+                  <div class="task-progress">
+                    <div class="progress-bar-container">
+                      <div class="progress-bar-fill" style="width: 15%"></div>
+                    </div>
+                    <span class="progress-percent">15%</span>
+                  </div>
+                </div>
+
+                <!-- Task 4 -->
+                <div class="task high completed">
+                  <div class="task-header">
+                    <div class="task-name">Review code pull requests</div>
+                    <button class="btn-done" onclick="toggleDone(this)">Done</button>
+                  </div>
+
+                  <div class="task-deadline">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <rect x="4" y="5" width="16" height="16" rx="2" stroke="#6B7280" stroke-width="2" fill="white"/>
+                      <line x1="4" y1="9" x2="20" y2="9" stroke="#6B7280" stroke-width="2"/>
+                      <line x1="8" y1="3" x2="8" y2="6" stroke="#6B7280" stroke-width="2" stroke-linecap="round"/>
+                      <line x1="16" y1="3" x2="16" y2="6" stroke="#6B7280" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <span>Kết thúc: 15/02/2026</span>
+                  </div>
+
+                  <div class="task-progress">
+                    <div class="progress-bar-container">
+                      <div class="progress-bar-fill" style="width: 100%"></div>
+                    </div>
+                    <span class="progress-percent">100%</span>
+                  </div>
+                </div>
+            
+                <!-- Task 5 -->
+                <div class="task medium">
+                  <div class="task-header">
+                    <div class="task-name">Họp team weekly meeting</div>
+                    <button class="btn-done" onclick="toggleDone(this)">Done</button>
+                  </div>
+
+                  <div class="task-deadline">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <rect x="4" y="5" width="16" height="16" rx="2" stroke="#6B7280" stroke-width="2" fill="white"/>
+                      <line x1="4" y1="9" x2="20" y2="9" stroke="#6B7280" stroke-width="2"/>
+                      <line x1="8" y1="3" x2="8" y2="6" stroke="#6B7280" stroke-width="2" stroke-linecap="round"/>
+                      <line x1="16" y1="3" x2="16" y2="6" stroke="#6B7280" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <span>Kết thúc: 18/02/2026</span>
+                  </div>
+
+                  <div class="task-progress">
+                    <div class="progress-bar-container">
+                      <div class="progress-bar-fill" style="width: 80%"></div>
+                    </div>
+                    <span class="progress-percent">80%</span>
+                  </div>
+                </div>
+            
+                <!-- Task 6 -->
+                <div class="task low">
+                  <div class="task-header">
+                    <div class="task-name">Đọc tài liệu React 19</div>
+                    <button class="btn-done" onclick="toggleDone(this)">Done</button>
+                  </div>
+
+                  <div class="task-deadline">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <rect x="4" y="5" width="16" height="16" rx="2" stroke="#6B7280" stroke-width="2" fill="white"/>
+                      <line x1="4" y1="9" x2="20" y2="9" stroke="#6B7280" stroke-width="2"/>
+                      <line x1="8" y1="3" x2="8" y2="6" stroke="#6B7280" stroke-width="2" stroke-linecap="round"/>
+                      <line x1="16" y1="3" x2="16" y2="6" stroke="#6B7280" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <span>Kết thúc: 01/03/2026</span>
+                  </div>
+
+                  <div class="task-progress">
+                    <div class="progress-bar-container">
+                      <div class="progress-bar-fill" style="width: 30%"></div>
+                    </div>
+                    <span class="progress-percent">30%</span>
+                  </div>
+                </div>
+
+              </div>
             </div>
             <div class="pomodoro">
             </div>
