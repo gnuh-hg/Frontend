@@ -14,6 +14,95 @@ document.addEventListener('DOMContentLoaded', function() {
     let isSaving = false; // Flag để tránh race condition
     let isRedirecting = false;
 
+    // ✅ HÀM CHUYỂN ĐỔI RGB SANG HEX
+    function rgbToHex(rgb) {
+        // Nếu đã là HEX, trả về luôn
+        if (rgb.startsWith('#')) return rgb;
+        
+        // Parse RGB (ví dụ: "rgb(160, 174, 192)" -> ["160", "174", "192"])
+        const result = rgb.match(/\d+/g);
+        if (!result || result.length < 3) return '#ffffff';
+        
+        const r = parseInt(result[0]);
+        const g = parseInt(result[1]);
+        const b = parseInt(result[2]);
+        
+        return '#' + [r, g, b].map(x => {
+            const hex = x.toString(16);
+            return hex.length === 1 ? '0' + hex : hex;
+        }).join('');
+    }
+
+    function updateEmptyState() {
+        const mainListWrapper = document.querySelector('.folder-container > .list-wrapper');
+        const items = mainListWrapper.querySelectorAll(':scope > li');
+        
+        // Xóa empty state cũ nếu có
+        const existingEmptyState = mainListWrapper.querySelector('.empty-state');
+        if (existingEmptyState) {
+            existingEmptyState.remove();
+        }
+
+        // Nếu không có items, hiển thị empty state
+        if (items.length === 0) {
+            const emptyStateHTML = `
+                <div class="empty-state">
+                    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="folderGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#a78bfa;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                        
+                        <!-- Large folder -->
+                        <g transform="translate(100, 95)">
+                            <path d="M -35 -20 L -12 -20 L -6 -26 L 30 -26 C 36 -26 36 -20 36 -20 L 36 25 C 36 31 30 31 30 31 L -30 31 C -36 31 -36 25 -36 25 Z" 
+                                  fill="none" 
+                                  stroke="url(#folderGradient)" 
+                                  stroke-width="3.5" 
+                                  stroke-linecap="round" 
+                                  stroke-linejoin="round"/>
+                            
+                            <!-- Inner detail -->
+                            <line x1="-20" y1="0" x2="20" y2="0" 
+                                  stroke="#6366f1" 
+                                  stroke-width="2" 
+                                  stroke-linecap="round"
+                                  opacity="0.3"/>
+                            <line x1="-20" y1="8" x2="20" y2="8" 
+                                  stroke="#6366f1" 
+                                  stroke-width="2" 
+                                  stroke-linecap="round"
+                                  opacity="0.3"/>
+                            <line x1="-20" y1="16" x2="10" y2="16" 
+                                  stroke="#6366f1" 
+                                  stroke-width="2" 
+                                  stroke-linecap="round"
+                                  opacity="0.2"/>
+                        </g>
+                        
+                        <!-- Plus badge -->
+                        <circle cx="128" cy="115" r="16" 
+                                fill="#6366f1"/>
+                        <line x1="128" y1="106" x2="128" y2="124" 
+                              stroke="white" 
+                              stroke-width="3" 
+                              stroke-linecap="round"/>
+                        <line x1="119" y1="115" x2="137" y2="115" 
+                              stroke="white" 
+                              stroke-width="3" 
+                              stroke-linecap="round"/>
+                    </svg>
+                        
+                    <h3>No folders or projects yet</h3>
+                    <p>Click "Add folder" below to get started</p>
+                </div>
+            `;
+            mainListWrapper.insertAdjacentHTML('beforeend', emptyStateHTML);
+        }
+    }
+
     // --- FETCHAUTH ĐÃ SỬA ---
     async function fetchWithAuth(url, options = {}) {
         const token = localStorage.getItem('access_token');
@@ -38,7 +127,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         return response;
     }
-
     // --- 2. QUẢN LÝ DỮ LIỆU (API CALLS) ---
 
     // Load dữ liệu ban đầu
@@ -70,6 +158,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (err) {
             console.error("Lỗi khi load dữ liệu:", err);
         }
+        updateEmptyState();
     }
 
     // SỬA: Debounce để tránh gọi API liên tục
@@ -93,7 +182,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     const name = li.querySelector('p').innerText;
                     const isFolder = li.classList.contains('folder-item');
                     const iconPath = li.querySelector('.folder-icon path') || li.querySelector('.project-icon circle');
-                    const color = rgbToHex(iconPath ? (iconPath.getAttribute('fill') || iconPath.style.fill) : '#ffffff');
+                    const colorRaw = iconPath ? (iconPath.getAttribute('fill') || iconPath.style.fill) : '#ffffff';
+                    const color = rgbToHex(colorRaw); // ✅ Chuyển đổi RGB sang HEX
                     const isExpanded = li.classList.contains('is-expanded');
 
                     items.push({
@@ -102,7 +192,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         type: isFolder ? "FOLDER" : "PROJECT",
                         parent_id: parentId ? String(parentId) : null,
                         position: parseInt(index) || 0,
-                        color: color || "#ffffff",
+                        color: color,
                         expanded: Boolean(isExpanded)
                     });
 
@@ -173,7 +263,8 @@ document.addEventListener('DOMContentLoaded', function() {
             currentSelectedItem = item; 
             const currentName = item.querySelector('p').innerText;
             const iconPath = item.querySelector('.folder-icon path') || item.querySelector('.project-icon circle');
-            const currentColor = rgbToHex(iconPath ? (iconPath.getAttribute('fill') || iconPath.style.fill) : '#ffffff');
+            const currentColorRaw = iconPath ? (iconPath.getAttribute('fill') || iconPath.style.fill) : '#ffffff';
+            const currentColor = rgbToHex(currentColorRaw); // ✅ Chuyển đổi sang HEX
             
             overlay.style.display = 'flex';
             modalMoreBox.style.display = 'flex';
@@ -182,7 +273,8 @@ document.addEventListener('DOMContentLoaded', function() {
             
             modalMoreBox.querySelectorAll('.color-swatch').forEach(s => {
                 s.classList.remove('selected');
-                if (s.style.backgroundColor === currentColor) s.classList.add('selected');
+                const swatchColor = rgbToHex(s.style.backgroundColor); // ✅ Chuyển đổi sang HEX
+                if (swatchColor === currentColor) s.classList.add('selected');
             });
         });
 
@@ -239,7 +331,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const isFolder = folderForm.style.display !== 'none';
         const input = isFolder ? folderForm.querySelector('.modal-input') : projectForm.querySelector('.modal-input');
         const name = input.value.trim();
-        const color = rgbToHex(document.querySelector('.modal-box .color-swatch.selected')?.style.backgroundColor || '#ffffff');
+        const colorRaw = document.querySelector('.modal-box .color-swatch.selected')?.style.backgroundColor || '#ffffff';
+        const color = rgbToHex(colorRaw); // ✅ Chuyển đổi sang HEX
         
         if (!name) {
             input.focus();
@@ -265,6 +358,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (res.ok) {
                 const createdItem = await res.json();
                 renderItem(createdItem, mainListWrapper);
+                updateEmptyState();
                 input.value = '';
                 closeModals();
             } else {
@@ -282,17 +376,18 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const id = currentSelectedItem.getAttribute('data-id');
         const newName = modalMoreBox.querySelector('.modal-input').value.trim();
-        const newColor = rgbToHex(modalMoreBox.querySelector('.color-swatch.selected')?.style.backgroundColor || '#ffffff');
+        const newColorRaw = modalMoreBox.querySelector('.color-swatch.selected')?.style.backgroundColor || '#ffffff';
+        const newColor = rgbToHex(newColorRaw); // ✅ Chuyển đổi sang HEX
 
         if (!newName) {
-            modalMoreBox.focus();
+            modalMoreBox.querySelector('.modal-input').focus();
             alert("Vui lòng nhập tên!");
             return;
         }
 
         try {
             const res = await fetchWithAuth(`${Config.URL_API}/items/${id}`, {
-                method: 'PATCH',
+                method: 'PUT',
                 body: JSON.stringify({ name: newName, color: newColor })
             });
 
@@ -314,7 +409,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!currentSelectedItem) return;
         
         const id = currentSelectedItem.getAttribute('data-id');
-        const isFolder = currentSelectedItem.classList.contains('folder-item');
 
         try {
             const res = await fetchWithAuth(`${Config.URL_API}/items/${id}`, { 
@@ -323,6 +417,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (res.ok) {
                 currentSelectedItem.remove();
+                updateEmptyState();
                 closeModals();
             } else {
                 alert("Không thể xóa");
@@ -350,15 +445,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnTabProject = document.querySelector('.btn-tab-project');
     
     btnTabFolder?.addEventListener('click', () => {
-        btnTabFolder.style.borderBottom = "1px solid #00FFFF";
-        btnTabProject.style.borderBottom = "1px solid #2b2d31";
+        btnTabFolder.style.backgroundColor = "#6366f1";
+        btnTabProject.style.backgroundColor = "transparent"
         folderForm.style.display = "block"; 
         projectForm.style.display = "none";
     });
     
     btnTabProject?.addEventListener('click', () => {
-        btnTabProject.style.borderBottom = "1px solid #00FFFF";
-        btnTabFolder.style.borderBottom = "1px solid #2b2d31";
+        btnTabProject.style.backgroundColor = "#6366f1";
+        btnTabFolder.style.backgroundColor = "transparent"
         projectForm.style.display = "block"; 
         folderForm.style.display = "none";
     });
@@ -372,29 +467,5 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    function rgbToHex(rgb) {
-        // Nếu đã là hex, return luôn
-        if (rgb.startsWith('#')) {
-            return rgb;
-        }
-
-        // Parse RGB string: "rgb(255, 0, 0)" → [255, 0, 0]
-        const values = rgb.match(/\d+/g);
-        if (!values || values.length < 3) {
-            return '#ffffff'; // Fallback
-        }
-
-        const r = parseInt(values[0]);
-        const g = parseInt(values[1]);
-        const b = parseInt(values[2]);
-
-        // Convert sang hex
-        return "#" + 
-            r.toString(16).padStart(2, '0') +
-            g.toString(16).padStart(2, '0') +
-            b.toString(16).padStart(2, '0');
-    }
-    
     loadData();
 });
-

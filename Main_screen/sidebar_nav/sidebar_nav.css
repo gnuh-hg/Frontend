@@ -1,4 +1,9 @@
 /* ==========================================================================
+   SIDEBAR REDESIGN - MODERN DARK THEME
+   Matching login page aesthetic
+   ========================================================================== */
+
+/* ==========================================================================
    1. GLOBAL & RESET STYLES
    ========================================================================== */
 * {
@@ -7,40 +12,88 @@
     padding: 0;
 }
 
+:root {
+    /* Main Colors - matching login page */
+    --bg-primary: #0f0f13;
+    --bg-secondary: #1a1a20;
+    --bg-tertiary: #24242a;
+    --bg-hover: #2b2d31;
+    
+    /* Accent Colors */
+    --accent-primary: #6366f1;
+    --accent-hover: #7c3aed;
+    --accent-danger: #ef4444;
+    
+    /* Text Colors */
+    --text-primary: #f5f5f7;
+    --text-secondary: #a1a1aa;
+    --text-tertiary: #71717a;
+    
+    /* Border Colors */
+    --border-color: #27272a;
+    --border-light: #3f3f46;
+    
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.3);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.5);
+    
+    /* Radius */
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+}
+
 /* ==========================================================================
    2. SIDEBAR LAYOUT
    ========================================================================== */
 .sidebar-nav {
     position: relative;
     display: flex;
-    /* display: none; */
     flex-direction: column;
     margin: 5px;
     margin-left: 0;
     width: calc(20% - 5px);
     min-width: 200px;
     height: calc(100vh - 60px);
-    background-color: #1a1a20;
+    background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
     border-top-right-radius: 8px;
     border-bottom-right-radius: 8px;
-    box-shadow: 8px 0 24px rgba(0, 0, 0, 0.35);
+    box-shadow: var(--shadow-xl);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* folder-container */
+/* Folder Container */
 .folder-container {
-    background-color: transparent;
+    flex: 1;
     padding: 5px;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
-/* Container chung cho danh sách */
+/* Custom Scrollbar */
+.folder-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.folder-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.folder-container::-webkit-scrollbar-thumb {
+    background: var(--bg-hover);
+    border-radius: 3px;
+}
+
+.folder-container::-webkit-scrollbar-thumb:hover {
+    background: var(--border-light);
+}
+
+/* List Wrapper */
 .list-wrapper {
     width: 100%;
-    min-height: 5px;
     list-style: none;
-    background-color: transparent;
-    color: #dbdee1;
-    font-size: 14px;
-    outline: none;
     margin: 0;
     padding: 0;
 }
@@ -50,74 +103,126 @@
    ========================================================================== */
 .folder-item {
     width: 100%;
-    background-color: transparent;
-    border-radius: 5px;
-    margin: 0;
-    color: #dbdee1;
-    font-size: 14px;
-    outline: none;
+    margin-bottom: 4px;
+    border-radius: var(--radius-sm);
+    transition: all 0.2s ease;
 }
 
-/* Header của Folder */
+/* Folder Header */
 .folder-item div.item-header {
     display: flex;
+    align-items: center;
     width: 100%;
     padding: 5px 5px;
     margin: 0;
     background-color: transparent;
-    border-radius: 5px;
-    color: #dbdee1;
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
     font-size: 14px;
-    outline: none;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.folder-item div.item-header:hover {
+    background-color: var(--bg-hover);
+}
+
+.folder-item div.item-header:active {
+    transform: scale(0.98);
 }
 
 .folder-item div.item-header p.label {
     position: relative;
-    top: 3px;
+    flex: 1;
     margin-left: 0;
     margin-right: auto;
-    background-color: transparent;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
 }
 
-/* Icons trong Folder Header */
+/* Folder Icons */
 .folder-item div.item-header svg {
-    width: 15px;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
     margin-right: 4px;
-    background-color: transparent;
 }
 
-/* folder-icon */
 .folder-item div.item-header svg.folder-icon {
     width: 22px;
+    height: 22px;
 }
 
 .folder-item div.item-header svg.folder-icon path {
-    stroke-width: 3;
-    stroke-linejoin: round;
-    stroke-linecap: round;
+    stroke-width: 0;
+    fill-opacity: 0.9;
+    transition: fill 0.2s ease;
+}
+
+.folder-item div.item-header:hover svg.folder-icon path {
+    fill-opacity: 1;
+}
+
+/* Expand/Collapse Icons */
+.folder-item div.item-header svg.icon-collapsed,
+.folder-item div.item-header svg.icon-expanded {
+    width: 15px;
+    height: 15px;
+    margin-right: 4px;
 }
 
 .folder-item div.item-header svg polyline {
     fill: none;
-    stroke: white;
+    stroke: var(--text-secondary);
     stroke-width: 2.5;
     stroke-linecap: round;
     stroke-linejoin: round;
 }
 
-/* Trạng thái Expand/Collapse của Folder */
+.folder-item div.item-header:hover svg polyline {
+    stroke: var(--text-primary);
+}
+
 .folder-item div.item-header svg.icon-expanded {
     display: none;
 }
 
+.folder-item.is-expanded div.item-header svg.icon-collapsed {
+    display: none;
+}
+
+.folder-item.is-expanded div.item-header svg.icon-expanded {
+    display: block;
+}
+
+/* Folder Content */
 .folder-item div.item-content {
     display: none;
     margin-left: 12px;
     background-color: transparent;
+    animation: slideDown 0.2s ease;
 }
 
 .folder-item.is-expanded > .item-content {
     display: block;
+}
+
+.folder-item:hover > div.item-content {
+    border-left: 1px solid var(--border-color);
+    margin-left: 11px;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .item-content .list-wrapper {
@@ -129,95 +234,164 @@
    ========================================================================== */
 .project-item-child {
     display: flex;
+    align-items: center;
     width: 100%;
     padding: 5px;
     margin-left: 0px;
     background-color: transparent;
-    border-radius: 5px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.project-item-child:hover {
+    background-color: var(--bg-hover);
+}
+
+.project-item-child:active {
+    transform: scale(0.98);
 }
 
 .project-item-child p {
-    background-color: transparent;
-    color: #dbdee1;
+    flex: 1;
+    margin: 0;
+    color: var(--text-primary);
     font-size: 14px;
-    outline: none;
+    font-weight: 400;
+    letter-spacing: 0.01em;
 }
 
-/* project-icon */
+/* Project Icon */
 .project-item-child svg.project-icon {
     width: 10px;
+    height: 10px;
     margin-right: 10px;
     margin-left: 5px;
-    background-color: transparent;
+    flex-shrink: 0;
 }
 
 .project-item-child svg.project-icon circle {
-    stroke-width: 4;
+    stroke-width: 0;
+    filter: drop-shadow(0 0 3px currentColor);
+    opacity: 0.9;
+    transition: opacity 0.2s ease;
+}
+
+.project-item-child:hover svg.project-icon circle {
+    opacity: 1;
 }
 
 /* ==========================================================================
    5. ACTION BUTTONS (MORE/MODAL TRIGGER)
    ========================================================================== */
-/* Nút ba chấm (More actions) */
 .folder-item div.item-header div.modal-more,
 .project-item-child div.modal-more {
     display: none;
+    opacity: 0;
     width: 25px;
     margin-left: auto;
-    background-color: transparent;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s ease;
 }
 
 .folder-item div.item-header div.modal-more {
     position: relative;
 }
 
+.folder-item div.item-header:hover div.modal-more,
+.project-item-child:hover div.modal-more {
+    display: flex;
+    opacity: 1;
+}
+
+.folder-item div.item-header div.modal-more:hover,
+.project-item-child div.modal-more:hover {
+    background-color: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
 .folder-item div.item-header div.modal-more svg.action-more {
     position: relative;
-    top: 1px;
+    /* top: 1px; */
+    left: 2px;
     width: 25px;
-    margin-left: auto;
-    background-color: transparent;
+    height: 25px;
     cursor: pointer;
 }
 
 .project-item-child div.modal-more svg.action-more {
     position: relative;
-    bottom: 3px;
+    /* bottom: 3px; */
     width: 25px;
-    margin-left: auto;
-    background-color: transparent;
+    height: 25px;
     cursor: pointer;
 }
 
 svg.action-more circle {
-    fill: white;
+    fill: var(--text-secondary);
+    transition: fill 0.2s ease;
 }
 
-/* Sidebar Actions (Bottom area) */
+.modal-more:hover svg.action-more circle {
+    fill: var(--text-primary);
+}
+
+/* ==========================================================================
+   6. SIDEBAR ACTIONS (BOTTOM AREA)
+   ========================================================================== */
 .sidebar-actions {
     display: flex;
     margin-top: auto;
+    padding: 0 10px 10px 10px;  /* ← Thêm padding left/right */
     background-color: transparent;
-    border-top: 1px solid #2b2d31;
 }
 
 .add-button {
     display: flex;
     align-items: center;
+    justify-content: center;
     width: 100%;
-    height: 100%;
-    padding: 10px 0;
-    background-color: transparent;
+    padding: 10px 16px;
+    background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-hover) 100%);
     border: none;
+    border-radius: var(--radius-md);
     cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.add-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+}
+
+.add-button:active {
+    transform: translateY(0);
 }
 
 .add-button p {
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
     background-color: transparent;
-    color: #ef5541;
+}
+
+.add-button:hover p,
+.add-button:hover .icon-plus svg {
+    color: white;
+    fill: white;
+}
+
+.add-button:hover .icon-folder-plus svg {
+    stroke: white;
 }
 
 .icon-plus {
+    margin-right: 5px;
     background-color: transparent;
 }
 
@@ -227,7 +401,7 @@ svg.action-more circle {
     height: 18px;
     margin-right: 5px;
     margin-left: 5px;
-    fill: #ef5541;
+    fill: white;
     background-color: transparent;
 }
 
@@ -241,7 +415,8 @@ svg.action-more circle {
 
 .icon-folder-plus svg {
     width: 25px;
-    stroke: #ef5541;
+    height: 25px;
+    stroke: white;
     background-color: transparent;
 }
 
@@ -253,44 +428,38 @@ svg.action-more circle {
     mask: url(#folder-mask);
 }
 
+.icon-folder-plus svg path {
+    fill: none;
+    stroke-width: 3;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    mask: url(#folder-mask);
+}
+
 /* ==========================================================================
-   6. INTERACTION STATES (HOVER & DRAG)
+   7. DRAG & DROP STATES
    ========================================================================== */
-.list-wrapper li.project-item-child:hover, 
-.list-wrapper li.folder-item div.item-header:hover {
-    background-color: #2b2d31;
-}
-
-.list-wrapper li.project-item-child:hover > div.modal-more, 
-.list-wrapper li.folder-item div.item-header:hover > div.modal-more {
-    display: block;
-}
-
-.folder-item:hover > div.item-content {
-    border-left: 1px solid #2b2d31;
-    margin-left: 11px;
-}
-
-.add-button:hover p,
-.add-button:hover .icon-plus svg {
-    color: #f27767;
-    fill: #f27767;
-}
-
-.add-button:hover .icon-folder-plus svg {
-    stroke: #f27767;
-}
-
 .drag-ghost {
     opacity: 0.4;
-    background-color: #2b2d31 !important;
+    background-color: var(--bg-hover) !important;
     border: 1px dashed #00FFFF;
 }
 
+.sortable-ghost {
+    opacity: 0.5;
+    background-color: var(--bg-hover) !important;
+    border: 2px dashed var(--accent-primary);
+    border-radius: var(--radius-sm);
+}
+
+.sortable-drag {
+    opacity: 0.8;
+    box-shadow: var(--shadow-lg);
+}
+
 /* ==========================================================================
-   7. MODAL UI COMPONENTS
+   8. MODAL UI COMPONENTS
    ========================================================================== */
-/* Overlay nền */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -301,7 +470,14 @@ svg.action-more circle {
     align-items: center;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.7);
+    background-color: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(8px);
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 .modal-overlay.show-add .modal-box {
@@ -312,51 +488,74 @@ svg.action-more circle {
     display: flex;
 }
 
-/* Cấu trúc chung của Modal Box */
-.modal-box, .modal-more-box {
-    position: fixed;
+/* Modal Box Structure */
+.modal-box,
+.modal-more-box {
     display: none;
     flex-direction: column;
-    top: 0; right: 0; bottom: 0; left: 0;
-    margin: auto;
-    width: 300px;
-    height: 170px;
-    background-color: #1a1a20;
-    border-radius: 10px;
-    box-shadow: 8px 0 24px rgba(0, 0, 0, 0.35);
+    width: 380px;
+    padding: 24px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xl);
+    animation: scaleIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.modal-more-box {
-    padding-top: 10px;
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
 
-/* Tabs trong Modal */
+/* Modal Tabs */
 .modal-tabs {
     display: flex;
-    width: 100%;
-    height: 20%;
-    background-color: transparent;
+    gap: 8px;
+    margin-bottom: 20px;
+    padding: 4px;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-md);
 }
 
 .modal-tabs button {
-    position: relative;
-    width: 100%;
+    flex: 1;
+    padding: 10px 16px;
     background-color: transparent;
     border: none;
-    border-bottom: 1px solid #2b2d31;
-    font-size: 15px;
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 500;
     cursor: pointer;
+    transition: all 0.2s ease;
 }
 
-/* btn-tab-project -> btn-tab-folder */
+.modal-tabs button:hover {
+    color: var(--text-primary);
+    background: var(--bg-hover);
+}
+
 .modal-tabs button.btn-tab-folder {
-    border-bottom: 1px solid #00FFFF;
+    background: var(--accent-primary);
+    color: white;
+}
+
+.modal-tabs button.btn-tab-project {
+    background: transparent;
+    color: white;
 }
 
 /* Form Elements */
-/* project-form -> folder-form | task-form -> project-form */
-.folder-form, .project-form, .form {
-    background-color: transparent;
+.folder-form,
+.project-form,
+.form {
+    margin-bottom: 20px;
 }
 
 .project-form {
@@ -366,84 +565,199 @@ svg.action-more circle {
 .input-group {
     display: flex;
     align-items: center;
-    margin: 8px 20px;
-    padding: 7px 12px;
-    background-color: #24242a;
-    border-radius: 8px;
-    transition: background-color 0.2s;
+    padding: 14px 16px;
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    transition: all 0.2s ease;
 }
 
 .input-group:focus-within {
-    background-color: #2b2d31;
+    background-color: var(--bg-hover);
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 
 .modal-input {
     width: 100%;
     background: transparent;
     border: none;
-    color: #dbdee1;
-    font-size: 15px;
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 400;
     outline: none;
+    letter-spacing: 0.01em;
 }
 
 .modal-input::placeholder {
-    color: #949ba4;
+    color: var(--text-tertiary);
 }
 
 /* Color Palette */
 .color-palette {
     display: grid;
-    grid-template-columns: repeat(10, 20px); 
-    gap: 6px; 
-    margin: auto;
-    margin-top: 0;
-    background-color: transparent;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 10px;
+    margin-bottom: 24px;
+    padding: 16px;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-md);
 }
 
 .color-swatch {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    border: none;
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 8px;
+    border: 2px solid transparent;
     cursor: pointer;
-    transition: transform 0.2s;
+    transition: all 0.2s ease;
+    position: relative;
 }
 
 .color-swatch:hover {
+    transform: scale(1.15);
+    border-color: var(--border-light);
+}
+
+.color-swatch.selected {
+    border-color: white;
+    box-shadow: 0 0 0 2px var(--bg-secondary), 0 0 12px currentColor;
     transform: scale(1.1);
 }
 
 .color-swatch.selected::after {
-    content: '';
-    width: 3px;
-    height: 6px;
-    margin-bottom: 2px;
-    border: solid white;
-    border-width: 0 2px 2px 0;
-    transform: rotate(45deg);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
-/* Footer Modal Buttons */
+/* Confirm Box */
 .confirm-box {
     display: flex;
-    margin-left: auto;
-    background-color: transparent;
+    gap: 8px;
+    justify-content: flex-end;
 }
 
 .confirm-box p {
-    padding: 5px;
-    margin: 9px;
+    padding: 10px 20px;
     background-color: transparent;
-    border: 1px solid #2b2d31;
-    border-radius: 5px;
-    font-size: 15px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 500;
     cursor: pointer;
+    transition: all 0.2s ease;
 }
 
 .confirm-box p:hover {
-    background-color: #2b2d31;
+    background-color: var(--bg-hover);
+    border-color: var(--border-light);
+}
+
+.confirm-box .btn-accept {
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
+    color: white;
+}
+
+.confirm-box .btn-accept:hover {
+    background: var(--accent-hover);
+    border-color: var(--accent-hover);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.confirm-box .btn-delete {
+    background: transparent;
+    border-color: var(--accent-danger);
+    color: var(--accent-danger);
+}
+
+.confirm-box .btn-delete:hover {
+    background: var(--accent-danger);
+    color: white;
+}
+
+/* ==========================================================================
+   9. RESPONSIVE DESIGN
+   ========================================================================== */
+@media (max-width: 250px) {
+    .sidebar-nav {
+        width: 100%;
+        min-width: 100%;
+    }
+    
+    .modal-box,
+    .modal-more-box {
+        width: 90%;
+        max-width: 380px;
+    }
+}
+
+/* ==========================================================================
+   10. ACCESSIBILITY & UTILITIES
+   ========================================================================== */
+.folder-item div.item-header:focus-visible,
+.project-item-child:focus-visible,
+.add-button:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
+}
+
+/* Selection color */
+::selection {
+    background-color: var(--accent-primary);
+    color: white;
+}
+
+/* =================================================================
+   11. EMPTY STATE - Thêm vào CSS
+   ================================================================= */
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+}
+
+.empty-state svg {
+    width: 120px;
+    height: 120px;
+    margin-bottom: 20px;
+    opacity: 0.3;
+}
+
+.empty-state h3 {
+    color: var(--text-secondary);
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.empty-state p {
+    color: var(--text-tertiary);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+/* Animation cho empty state */
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.empty-state svg {
+    animation: float 3s ease-in-out infinite;
 }
