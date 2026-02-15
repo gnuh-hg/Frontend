@@ -72,24 +72,6 @@
     overflow-x: hidden;
 }
 
-/* Custom Scrollbar */
-.folder-container::-webkit-scrollbar {
-    width: 6px;
-}
-
-.folder-container::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.folder-container::-webkit-scrollbar-thumb {
-    background: var(--bg-hover);
-    border-radius: 3px;
-}
-
-.folder-container::-webkit-scrollbar-thumb:hover {
-    background: var(--border-light);
-}
-
 /* List Wrapper */
 .list-wrapper {
     width: 100%;
@@ -141,6 +123,8 @@
     font-size: 14px;
     font-weight: 500;
     letter-spacing: 0.01em;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* Folder Icons */
@@ -260,6 +244,8 @@
     font-size: 14px;
     font-weight: 400;
     letter-spacing: 0.01em;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* Project Icon */
@@ -760,4 +746,26 @@ svg.action-more circle {
 
 .empty-state svg {
     animation: float 3s ease-in-out infinite;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-20px);
+    }
 }

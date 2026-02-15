@@ -312,8 +312,111 @@ document.addEventListener('DOMContentLoaded', function() {
         fallbackOnBody: true,
         swapThreshold: 0.65, 
         ghostClass: 'sortable-ghost',
-        onEnd: saveAllStructure 
+        onEnd: saveAllStructure,
+        
+        // ✅ THÊM: Kiểm tra trước khi move
+        onMove: function(evt) {
+            const draggedItem = evt.dragged;
+            const targetList = evt.to;
+
+            // Tìm folder cha gần nhất của target list
+            const targetFolder = targetList.closest('.folder-item');
+
+            // Tính độ sâu hiện tại của target
+            const targetDepth = targetFolder ? getFolderDepth(targetFolder) : 0;
+
+            // Nếu item được kéo là folder, tính độ sâu con của nó
+            let maxChildDepth = 0;
+            if (draggedItem.classList.contains('folder-item')) {
+                maxChildDepth = getMaxChildDepth(draggedItem);
+            }
+
+            // Kiểm tra: độ sâu target + 1 (chính nó) + độ sâu con <= 5
+            const totalDepth = targetDepth + 1 + maxChildDepth;
+
+            if (totalDepth > 5) {
+                // Hiển thị thông báo
+                showDepthWarning();
+                return false; // Chặn việc di chuyển
+            }
+
+            return true; // Cho phép di chuyển
+        }
     };
+    
+    function getFolderDepth(element) {
+        let depth = 0;
+        let current = element;
+        
+        while (current) {
+            if (current.classList && current.classList.contains('folder-item')) {
+                depth++;
+            }
+            current = current.parentElement?.closest('.folder-item');
+        }
+
+        return depth;
+    }
+
+    // Hàm tính độ sâu tối đa của các folder con
+    function getMaxChildDepth(folderElement) {
+        let maxDepth = 0;
+
+        function traverse(element, currentDepth) {
+            const childFolders = element.querySelectorAll(':scope > .item-content > .list-wrapper > .folder-item');
+
+            if (childFolders.length === 0) {
+                maxDepth = Math.max(maxDepth, currentDepth);
+                return;
+            }
+
+            childFolders.forEach(child => {
+                traverse(child, currentDepth + 1);
+            });
+        }
+
+        traverse(folderElement, 0);
+        return maxDepth;
+    }
+
+    let lastWarningTime = 0;
+    // Hàm hiển thị cảnh báo
+    function showDepthWarning() {
+        const currentTime = Date.now();
+        if (currentTime - lastWarningTime < 3000) return;
+        lastWarningTime = currentTime;
+
+        // Tạo tooltip cảnh báo
+        const existingWarning = document.querySelector('.depth-warning');
+        if (existingWarning) existingWarning.remove();
+
+        const warning = document.createElement('div');
+        warning.className = 'depth-warning';
+        warning.textContent = 'Maximum nesting depth is 5 levels';
+        warning.style.cssText = `
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #ef4444;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 10000;
+            animation: slideDown 0.3s ease-out;
+        `;
+
+        document.body.appendChild(warning);
+
+        // Tự động ẩn sau 3 giây
+        setTimeout(() => {
+            warning.style.animation = 'slideUp 0.3s ease-out';
+            setTimeout(() => warning.remove(), 300);
+        }, 3000);
+    }
 
     if (mainListWrapper) new Sortable(mainListWrapper, sortableOptions);
 

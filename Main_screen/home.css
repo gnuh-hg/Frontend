@@ -1,5 +1,5 @@
 * {
-    box-sizing: border-box;
+  box-sizing: border-box;
     padding: 0;
     margin: 0;
     font-family: Arial, sans-serif;
@@ -7,7 +7,9 @@
 }
 
 body {
-    background-color: #0e0d12;
+    background: linear-gradient(135deg, #0e0d12 0%, #1a1625 100%);
+    align-items: center;
+    justify-content: center;
 }
 
 .container {
