@@ -236,7 +236,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Delay redirect for better UX
                 setTimeout(() => {
-                    window.location.href = "../Main_screen/home.html";
+                    window.location.href = "../index.html";
                 }, 800);
             } else {
                 // Error from server

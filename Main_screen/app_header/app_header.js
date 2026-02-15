@@ -5,6 +5,6 @@ document.addEventListener('DOMContentLoaded', function() {
     username.addEventListener('click', function() {
         localStorage.removeItem('access_token'); // Xóa token
         
-        window.location.href = '../Account/login.html';
+        window.location.href = './Account/login.html';
     });
 });

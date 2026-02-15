@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!isRedirecting) {  // ✅ Thêm check này
                 isRedirecting = true;
                 alert("Phiên làm việc hết hạn. Vui lòng đăng nhập lại.");
-                window.location.href = "../Account/login.html";
+                window.location.href = "./Account/login.html";
             }
             throw new Error("Unauthorized"); // Ngăn code tiếp tục chạy
         }
