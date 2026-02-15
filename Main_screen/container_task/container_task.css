@@ -124,8 +124,8 @@ h1 .btn-done:hover {
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   line-height: 1.3;
   letter-spacing: 0.01em;
 }
