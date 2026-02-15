@@ -92,7 +92,7 @@
 
 /* Folder Header */
 .folder-item div.item-header {
-            display: flex;
+    display: flex;
     align-items: center;
     width: 100%;
     padding: 5px 5px;

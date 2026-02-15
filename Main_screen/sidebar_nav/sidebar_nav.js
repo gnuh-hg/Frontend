@@ -119,7 +119,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (response.status === 401) {
             if (!isRedirecting) {  // ✅ Thêm check này
                 isRedirecting = true;
-                alert("Phiên làm việc hết hạn. Vui lòng đăng nhập lại.");
+                showWarning("Phiên làm việc hết hạn. Vui lòng đăng nhập lại.");
                 window.location.href = "./Account/login.html";
             }
             throw new Error("Unauthorized"); // Ngăn code tiếp tục chạy
@@ -336,7 +336,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (totalDepth > 5) {
                 // Hiển thị thông báo
-                showDepthWarning();
+                showWarning('Maximum nesting depth is 5 levels');
                 return false; // Chặn việc di chuyển
             }
 
@@ -379,20 +379,20 @@ document.addEventListener('DOMContentLoaded', function() {
         return maxDepth;
     }
 
-    let lastWarningTime = 0;
     // Hàm hiển thị cảnh báo
-    function showDepthWarning() {
+    let lastWarningTime = 0;
+    function showWarning(warning_context) {
         const currentTime = Date.now();
         if (currentTime - lastWarningTime < 3000) return;
         lastWarningTime = currentTime;
 
         // Tạo tooltip cảnh báo
-        const existingWarning = document.querySelector('.depth-warning');
+        const existingWarning = document.querySelector('.warning');
         if (existingWarning) existingWarning.remove();
 
         const warning = document.createElement('div');
-        warning.className = 'depth-warning';
-        warning.textContent = 'Maximum nesting depth is 5 levels';
+        warning.className = 'warning';
+        warning.textContent = warning_context;
         warning.style.cssText = `
             position: fixed;
             top: 20px;
@@ -439,7 +439,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (!name) {
             input.focus();
-            alert("Vui lòng nhập tên!");
+            showWarning("Vui lòng nhập tên!");
             return;
         }
 
@@ -466,7 +466,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 closeModals();
             } else {
                 const errorData = await res.json();
-                alert(`Không thể tạo mục mới: ${errorData.detail || 'Lỗi không xác định'}`);
+                showWarning(`Không thể tạo mục mới: ${errorData.detail || 'Lỗi không xác định'}`);
             }
         } catch (err) {
             console.error("Lỗi khi tạo item:", err);
@@ -484,7 +484,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (!newName) {
             modalMoreBox.querySelector('.modal-input').focus();
-            alert("Vui lòng nhập tên!");
+            showWarning("Vui lòng nhập tên!");
             return;
         }
 
@@ -500,7 +500,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (iconPath) iconPath.setAttribute('fill', newColor);
                 closeModals();
             } else {
-                alert("Không thể cập nhật");
+                showWarning("Không thể cập nhật");
             }
         } catch (err) {
             console.error("Lỗi khi sửa item:", err);
@@ -523,7 +523,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateEmptyState();
                 closeModals();
             } else {
-                alert("Không thể xóa");
+                showWarning("Không thể xóa");
             }
         } catch (err) {
             console.error("Lỗi khi xóa item:", err);
