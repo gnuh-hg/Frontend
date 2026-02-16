@@ -14,6 +14,45 @@ document.addEventListener('DOMContentLoaded', function() {
     let isSaving = false; // Flag để tránh race condition
     let isRedirecting = false;
 
+    // Hàm hiển thị cảnh báo
+    let lastWarningTime = 0;
+    function showWarning(warning_context) {
+        const currentTime = Date.now();
+        if (currentTime - lastWarningTime < 3000) return;
+        lastWarningTime = currentTime;
+
+        // Tạo tooltip cảnh báo
+        const existingWarning = document.querySelector('.warning');
+        if (existingWarning) existingWarning.remove();
+
+        const warning = document.createElement('div');
+        warning.className = 'warning';
+        warning.textContent = warning_context;
+        warning.style.cssText = `
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #ef4444;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 10000;
+            animation: slideDown 0.3s ease-out;
+        `;
+
+        document.body.appendChild(warning);
+
+        // Tự động ẩn sau 3 giây
+        setTimeout(() => {
+            warning.style.animation = 'slideUp 0.3s ease-out';
+            setTimeout(() => warning.remove(), 300);
+        }, 3000);
+    }
+
     // ✅ HÀM CHUYỂN ĐỔI RGB SANG HEX
     function rgbToHex(rgb) {
         // Nếu đã là HEX, trả về luôn
@@ -119,8 +158,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (response.status === 401) {
             if (!isRedirecting) {  // ✅ Thêm check này
                 isRedirecting = true;
-                showWarning("Phiên làm việc hết hạn. Vui lòng đăng nhập lại.");
                 window.location.href = "./Account/login.html";
+                showWarning("Phiên làm việc hết hạn. Vui lòng đăng nhập lại.");
             }
             throw new Error("Unauthorized"); // Ngăn code tiếp tục chạy
         }
@@ -303,6 +342,21 @@ document.addEventListener('DOMContentLoaded', function() {
             const subList = item.querySelector('.list-wrapper');
             if (subList) new Sortable(subList, sortableOptions);
         }
+
+        if (item.classList.contains('project-item-child')) {
+            item.addEventListener('click', function(e) {
+                if (e.target.closest('.modal-more')) return;
+
+                const projectId = this.getAttribute('data-id');
+                const name = this.querySelector('p').innerText;
+                
+                const event = new CustomEvent('projectSelected', {
+                    detail: { id: projectId, name: name},
+                    bubbles: true
+                });
+                document.dispatchEvent(event);
+            });
+        }
     }
 
     // --- 4. SORTABLE ---
@@ -377,45 +431,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         traverse(folderElement, 0);
         return maxDepth;
-    }
-
-    // Hàm hiển thị cảnh báo
-    let lastWarningTime = 0;
-    function showWarning(warning_context) {
-        const currentTime = Date.now();
-        if (currentTime - lastWarningTime < 3000) return;
-        lastWarningTime = currentTime;
-
-        // Tạo tooltip cảnh báo
-        const existingWarning = document.querySelector('.warning');
-        if (existingWarning) existingWarning.remove();
-
-        const warning = document.createElement('div');
-        warning.className = 'warning';
-        warning.textContent = warning_context;
-        warning.style.cssText = `
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #ef4444;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            z-index: 10000;
-            animation: slideDown 0.3s ease-out;
-        `;
-
-        document.body.appendChild(warning);
-
-        // Tự động ẩn sau 3 giây
-        setTimeout(() => {
-            warning.style.animation = 'slideUp 0.3s ease-out';
-            setTimeout(() => warning.remove(), 300);
-        }, 3000);
     }
 
     if (mainListWrapper) new Sortable(mainListWrapper, sortableOptions);
