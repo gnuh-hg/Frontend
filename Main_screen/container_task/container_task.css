@@ -405,15 +405,6 @@ h1 .btn-done:hover {
    Horizontal layout, matching app aesthetic
    ================================================================= */
 
-/* Main container layout */
-.app-container {
-    display: flex;
-    height: calc(100vh - 60px);
-    gap: 0;
-    overflow: hidden;
-    position: relative;
-}
-
 /* Task Detail Panel */
 .task-detail-panel {
     position: absolute;
@@ -433,13 +424,24 @@ h1 .btn-done:hover {
     margin-left: 0;
     border-top-left-radius: 8px;
     border-bottom-left-radius: 8px;
-    transform: translateX(100%);
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 100;
+    
+    /* Complete hide with animation */
+    visibility: hidden;
+    opacity: 0;
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                visibility 0s 0.3s;
 }
 
 .task-detail-panel.active {
+    visibility: visible;
+    opacity: 1;
     transform: translateX(0);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                visibility 0s 0s;
 }
 
 /* Header */
@@ -767,26 +769,3 @@ h1 .btn-done:hover {
         font-size: 13px;
     }
 }
-
-/* @media (max-width: 768px) {
-    .app-container {
-        flex-direction: column;
-    }
-    
-    .container-task {
-        height: auto;
-        flex: none;
-    }
-    
-    .task-detail-panel.active {
-        width: 100%;
-        min-width: 100%;
-        height: 60vh;
-        border-left: none;
-        border-top: 1px solid var(--border-color);
-        border-radius: 0;
-        border-top-left-radius: 12px;
-        border-top-right-radius: 12px;
-        margin: 0;
-    }
-} */

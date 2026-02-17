@@ -14,45 +14,6 @@ document.addEventListener('DOMContentLoaded', function() {
         loadData();
     });
 
-    // Hàm hiển thị cảnh báo
-    let lastWarningTime = 0;
-    function showWarning(warning_context) {
-        const currentTime = Date.now();
-        if (currentTime - lastWarningTime < 3000) return;
-        lastWarningTime = currentTime;
-
-        // Tạo tooltip cảnh báo
-        const existingWarning = document.querySelector('.warning');
-        if (existingWarning) existingWarning.remove();
-
-        const warning = document.createElement('div');
-        warning.className = 'warning';
-        warning.textContent = warning_context;
-        warning.style.cssText = `
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #ef4444;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            z-index: 10000;
-            animation: slideDown 0.3s ease-out;
-        `;
-
-        document.body.appendChild(warning);
-
-        // Tự động ẩn sau 3 giây
-        setTimeout(() => {
-            warning.style.animation = 'slideUp 0.3s ease-out';
-            setTimeout(() => warning.remove(), 300);
-        }, 3000);
-    }
-
     async function fetchWithAuth(url, options = {}) {
         const token = localStorage.getItem('access_token');
         const defaultHeaders = {
@@ -122,7 +83,7 @@ document.addEventListener('DOMContentLoaded', function() {
                   <line x1="8" y1="3" x2="8" y2="6" stroke="#6B7280" stroke-width="2" stroke-linecap="round"/>
                   <line x1="16" y1="3" x2="16" y2="6" stroke="#6B7280" stroke-width="2" stroke-linecap="round"/>
                 </svg>
-                <span>Due: ${item.due_date}</span>
+                <span>Due: ${showDate(item.due_date)}</span>
               </div>
 
               <div class="task-progress">
@@ -140,7 +101,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function attachEvents(item){
         //Nút done
-        item.querySelector('.task-header button').addEventListener('click', function(e) {
+        item.querySelector('.task-header button').addEventListener('click', async function (e) {
             e.stopPropagation();
             if (item.classList.contains('completed')) return;
 
@@ -152,27 +113,45 @@ document.addEventListener('DOMContentLoaded', function() {
             if (progressPercent) progressPercent.textContent = '100%';
 
             this.textContent = '✓ Done';
+
+            setTimeout(async () => {
+                try {
+                    const taskId = item.dataset.id;
+                    const response = await fetchWithAuth(
+                        `${Config.URL_API}/project/${projectId}/items/${taskId}`, 
+                        { method: 'DELETE' }
+                    );
+                    
+                    if (response.ok) {
+                        item.remove();
+                        showWarning('Xóa task thành công');
+                    } else {
+                        item.remove();
+                        showWarning('Lỗi khi xóa task');
+                    }
+                } catch (err) {
+                    showWarning('Lỗi khi xóa task');
+                }
+            }, 400);
         });
 
         const panel = document.querySelector('.task-detail-panel');
-        item.addEventListener('click', (e) => {
+        item.addEventListener('click',  (e) => {
             if (!panel) return;
+
+            if (panel.className.includes('active')) {
+                panel.classList.remove('active');
+            }
+
             panel.classList.add('active');
         })
     }
 
+    let cnt = 0;
     container.querySelector('h1 button').addEventListener('click', async (e) => {
         try {
-            const today = new Date().toISOString().split('T')[0];
             const response = await fetchWithAuth(`${Config.URL_API}/project/${projectId}/items`, {
-                method: 'POST',
-                body: JSON.stringify({
-                    name: '',
-                    priority: 'medium',
-                    start_date: today,
-                    due_date: today,
-                    time_spent_minutes: 0
-                })
+                method: 'POST', body: {}
             });
             
             if (response.ok) {
@@ -181,6 +160,19 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 const errorData = await response.json();
                 showWarning(`Không thể tạo mục mới: ${errorData.detail || 'Lỗi không xác định'}`);
+                cnt++;
+                let pri = ['high', 'medium', 'low'];
+                const item = {
+                    id: cnt,
+                    position: cnt,
+                    name: `Task ${cnt}`,
+                    priority: pri[Math.ceil(Math.random() * 10) % 3],
+                    start_date: new Date(new Date().setHours(0, 0, 0, 0)),
+                    due_date: new Date(new Date().setHours(23, 59, 59, 999)),
+                    time_spent: new Date('00:00:00'),
+                    note: ""
+                };
+                renderItem(item);
             }
         } catch (err) {
             showWarning('Lỗi khi tạo task');
@@ -194,6 +186,189 @@ document.addEventListener('DOMContentLoaded', function() {
             const panel = document.querySelector('.task-detail-panel');
             if (!panel) return;
             panel.classList.remove('active');
+        });
+    }
+
+    // Hàm hiển thị cảnh báo
+    let lastWarningTime = 0;
+    function showWarning(warning_context) {
+        const currentTime = Date.now();
+        if (currentTime - lastWarningTime < 3000) return;
+        lastWarningTime = currentTime;
+
+        // Tạo tooltip cảnh báo
+        const existingWarning = document.querySelector('.warning');
+        if (existingWarning) existingWarning.remove();
+
+        const warning = document.createElement('div');
+        warning.className = 'warning';
+        warning.textContent = warning_context;
+        warning.style.cssText = `
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #ef4444;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 10000;
+            animation: slideDown 0.3s ease-out;
+        `;
+
+        document.body.appendChild(warning);
+
+        // Tự động ẩn sau 3 giây
+        setTimeout(() => {
+            warning.style.animation = 'slideUp 0.3s ease-out';
+            setTimeout(() => warning.remove(), 300);
+        }, 3000);
+    }
+
+    function showDate(date) {
+        const d = String(date.getDate()).padStart(2, '0');
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const y = date.getFullYear();
+        return `${d}/${m}/${y}`;
+    }
+
+    const priorityBadge = document.querySelector('.priority-badge');
+    const priorities = ['low', 'medium', 'high'];
+    let currentPriorityIndex = 2; // Start with 'high'
+    
+    // Priority badge click handler
+    priorityBadge.addEventListener('click', function() {
+        // Cycle to next priority
+        currentPriorityIndex = (currentPriorityIndex + 1) % priorities.length;
+        const newPriority = priorities[currentPriorityIndex];
+        
+        // Remove all priority classes
+        priorityBadge.classList.remove('low', 'medium', 'high');
+        
+        // Add new priority class
+        priorityBadge.classList.add(newPriority);
+        
+        // Update text
+        const priorityText = newPriority.charAt(0).toUpperCase() + newPriority.slice(1);
+        priorityBadge.querySelector('span').textContent = priorityText;
+    });
+    
+    // Date picker functionality
+    const dateDisplays = document.querySelectorAll('.date-display');
+    
+    dateDisplays.forEach(display => {
+        display.addEventListener('click', function() {
+            const targetId = this.getAttribute('data-target');
+            const dateInput = document.getElementById(targetId);
+            
+            if (dateInput) {
+                dateInput.showPicker(); // Modern browsers
+                
+                // Fallback for older browsers
+                dateInput.click();
+            }
+        });
+    });
+    
+    // Handle date input change
+    const startDateInput = document.getElementById('start-date');
+    const endDateInput = document.getElementById('end-date');
+    
+    if (startDateInput) {
+        startDateInput.addEventListener('change', function() {
+            updateDateDisplay(this, 'start-date');
+        });
+    }
+    
+    if (endDateInput) {
+        endDateInput.addEventListener('change', function() {
+            updateDateDisplay(this, 'end-date');
+        });
+    }
+    
+    // Function to update date display
+    function updateDateDisplay(input, targetId) {
+        const dateDisplay = document.querySelector(`.date-display[data-target="${targetId}"]`);
+        if (dateDisplay && input.value) {
+            const dateText = dateDisplay.querySelector('.date-text');
+            const date = new Date(input.value);
+            
+            // Format date as dd/mm/yyyy
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            
+            dateText.textContent = `${day}/${month}/${year}`;
+        }
+    }
+    
+    // Timer functionality (bonus)
+    const btnTimer = document.querySelector('.btn-timer');
+    const timeValue = document.querySelector('.time-value');
+    let timerInterval = null;
+    let totalSeconds = 0;
+    let isTimerRunning = false;
+    
+    if (btnTimer) {
+        btnTimer.addEventListener('click', function() {
+            if (isTimerRunning) {
+                // Stop timer
+                clearInterval(timerInterval);
+                btnTimer.classList.remove('active');
+                btnTimer.innerHTML = `
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                `;
+                isTimerRunning = false;
+            } else {
+                // Start timer
+                timerInterval = setInterval(function() {
+                    totalSeconds++;
+                    updateTimeDisplay();
+                }, 1000);
+                
+                btnTimer.classList.add('active');
+                btnTimer.innerHTML = `
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="6" y="4" width="4" height="16"></rect>
+                        <rect x="14" y="4" width="4" height="16"></rect>
+                    </svg>
+                `;
+                isTimerRunning = true;
+            }
+        });
+    }
+    
+    function updateTimeDisplay() {
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        timeValue.textContent = `${hours}h ${minutes}m`;
+    }
+    
+    // Close button functionality
+    const btnCloseDetail = document.querySelector('.btn-close-detail');
+    const taskDetailPanel = document.querySelector('.task-detail-panel');
+    
+    if (btnCloseDetail && taskDetailPanel) {
+        btnCloseDetail.addEventListener('click', function() {
+            taskDetailPanel.classList.remove('active');
+        });
+    }
+    
+    // Delete button functionality
+    const btnDeleteTask = document.querySelector('.btn-delete-task');
+    
+    if (btnDeleteTask) {
+        btnDeleteTask.addEventListener('click', function() {
+            if (confirm('Bạn có chắc chắn muốn xóa task này?')) {
+                // Add your delete logic here
+                taskDetailPanel.classList.remove('active');
+                console.log('Task deleted');
+            }
         });
     }
 });

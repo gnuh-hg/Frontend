@@ -538,7 +538,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateEmptyState();
                 closeModals();
             } else {
-                showWarning("Không thể xóa");
+                const errorData = await res.json();
+                showWarning(errorData.detail || "Không thể xóa");
             }
         } catch (err) {
             console.error("Lỗi khi xóa item:", err);
