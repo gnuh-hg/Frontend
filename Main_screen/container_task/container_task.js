@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let projectId = null;
     let nameProject = null;
     let isRedirecting = false;
-    document.querySelector('.task-detail-panel').classList.add('active');
+
     // Ẩn h1 và hiện empty state "chưa chọn project" lúc khởi tạo
     if (!Config.TEST) {
         container.querySelector('h1').style.display = 'none';
@@ -189,10 +189,10 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
         const wrapper = container.querySelector('.task-list');
         wrapper.insertAdjacentHTML('beforeend', html);
-        attachEvents(wrapper.lastElementChild);
+        attachEvents(wrapper.lastElementChild, item);
     }
 
-    function attachEvents(item){
+    function attachEvents(item, data){
         item.querySelector('.task-header button').addEventListener('click', async function (e) {
             e.stopPropagation();
             if (item.classList.contains('completed')) return;
@@ -208,9 +208,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
             setTimeout(async () => {
                 try {
-                    const taskId = item.dataset.id;
                     const response = await fetchWithAuth(
-                        `${Config.URL_API}/project/${projectId}/items/${taskId}`, 
+                        `${Config.URL_API}/project/${projectId}/items/${data.id}`, 
                         { method: 'DELETE' }
                     );
                     
@@ -238,6 +237,49 @@ document.addEventListener('DOMContentLoaded', function() {
         item.addEventListener('click', (e) => {
             e.stopPropagation();
             if (!panel) return;
+        
+            const name = panel.querySelector('.detail-task-name');
+            const priority = panel.querySelector('.priority-badge');
+            const priority_text = panel.querySelector('.priority-badge span');
+            const start_date_text = panel.querySelector('#startDateText');
+            const due_date_text = panel.querySelector('#dueDateText');
+            const start_date_btn = panel.querySelector('#startDateBtn');
+            const due_date_btn = panel.querySelector('#dueDateBtn');
+            const time_spent = panel.querySelector('.time-value');
+            const notes = panel.querySelector('.notes-textarea');
+        
+            name.value = data.name;
+            priority.classList.remove('low', 'medium', 'high');
+            priority.classList.add(data.priority);
+            priority_text.innerHTML = data.priority[0].toUpperCase() + data.priority.slice(1);
+        
+            // Start date
+            if (data.start_date) {
+                start_date_text.textContent = showDate(data.start_date);
+                start_date_text.classList.remove('placeholder');
+                start_date_btn.classList.add('has-date');
+                taskDatePicker.startDate = new Date(data.start_date); // đồng bộ với picker
+            } else {
+                start_date_text.textContent = 'Set date';
+                start_date_text.classList.add('placeholder');
+                start_date_btn.classList.remove('has-date');
+                taskDatePicker.startDate = null;
+            }
+        
+            // Due date
+            if (data.due_date) {
+                due_date_text.textContent = showDate(data.due_date);
+                due_date_text.classList.remove('placeholder');
+                due_date_btn.classList.add('has-date');
+                taskDatePicker.dueDate = new Date(data.due_date); // đồng bộ với picker
+            } else {
+                due_date_text.textContent = 'Set date';
+                due_date_text.classList.add('placeholder');
+                due_date_btn.classList.remove('has-date');
+                taskDatePicker.dueDate = null;
+            }
+            time_spent.innerHTML = `${data.time_spent} h`;
+        
             panel.classList.add('active');
         });
     }
@@ -252,13 +294,15 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             if (Config.TEST) {
                 cnt++;
-                let pri = ['high', 'medium', 'low'];
+                const pri = ['high', 'medium', 'low'];
+                const d = new Date();
                 const item = {
                     id: cnt, position: cnt, name: `Task ${cnt}`,
                     priority: pri[Math.ceil(Math.random() * 10) % 3],
-                    start_date: new Date(new Date().setHours(0, 0, 0, 0)),
-                    due_date: new Date(new Date().setHours(23, 59, 59, 999)),
-                    time_spent: new Date('00:00:00'), note: ""
+                    start_date: new Date(d.setHours(0,0,0,0)).toISOString(),
+                    due_date: new Date(d.setHours(23,59,59,999)).toISOString(),
+                    time_spent: 0,
+                    note: ""
                 };
                 renderItem(item);
                 return;
@@ -527,10 +571,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function showDate(_date) {
-        const cleaned = typeof _date === 'string' 
-            ? _date.replace(/(\.\d{3})\d*\.000Z$/, '$1Z') 
-            : _date;
-        const date = new Date(cleaned);
+        const date = new Date(_date);
         const d = String(date.getDate()).padStart(2, '0');
         const m = String(date.getMonth() + 1).padStart(2, '0');
         const y = date.getFullYear();
@@ -544,6 +585,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (priorityBadge) {
         priorityBadge.addEventListener('click', function(e) {
+            if (priorityBadge.classList.contains('low')) currentPriorityIndex = 0;
+            if (priorityBadge.classList.contains('medium')) currentPriorityIndex = 1;
+            if (priorityBadge.classList.contains('high')) currentPriorityIndex = 2;
+
             e.stopPropagation();
             currentPriorityIndex = (currentPriorityIndex + 1) % priorities.length;
             const newPriority = priorities[currentPriorityIndex];
@@ -558,9 +603,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // ========== TIMER ==========
     const btnTimer = document.querySelector('.btn-timer');
-    const timeValue = document.querySelector('.time-value');
     let timerInterval = null;
-    let totalSeconds = 0;
     let isTimerRunning = false;
     
     if (btnTimer) {
@@ -577,12 +620,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 `;
                 isTimerRunning = false;
             } else {
-                timerInterval = setInterval(function() {
-                    totalSeconds++;
-                    const hours = Math.floor(totalSeconds / 3600);
-                    const minutes = Math.floor((totalSeconds % 3600) / 60);
-                    timeValue.textContent = `${hours}h ${minutes}m`;
-                }, 1000);
                 
                 btnTimer.classList.add('active');
                 btnTimer.innerHTML = `
