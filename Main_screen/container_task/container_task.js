@@ -578,7 +578,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return `${d}/${m}/${y}`;
     }
 
-// ========== PRIORITY BADGE ==========
+    // ========== PRIORITY BADGE ==========
     const priorityBadge = document.querySelector('.priority-badge');
     const priorities = ['low', 'medium', 'high'];
     let currentPriorityIndex = 2;
@@ -636,14 +636,33 @@ document.addEventListener('DOMContentLoaded', function() {
     // ========== DELETE TASK ==========
     const btnDeleteTask = document.querySelector('.btn-delete-task');
     if (btnDeleteTask) {
-        btnDeleteTask.addEventListener('click', function(e) {
+        btnDeleteTask.addEventListener('click', async function(e) {
             e.stopPropagation();
-            if (confirm('Bạn có chắc chắn muốn xóa task này?')) {
-                const taskDetailPanel = document.querySelector('.task-detail-panel');
-                if (taskDetailPanel) {
-                    taskDetailPanel.classList.remove('active');
-                }
-                console.log('Task deleted');
+            const taskDetailPanel = document.querySelector('.task-detail-panel');
+
+            if (Config.TEST){
+                item.remove();
+                if (container.querySelectorAll('.task').length === 0) 
+                    showEmptyState('noTask');
+                if (taskDetailPanel) taskDetailPanel.classList.remove('active');
+                return;
+            }
+
+            try {
+                const response = await fetchWithAuth(
+                    `${Config.URL_API}/project/${projectId}/items/${data.id}`, 
+                    { method: 'DELETE' }
+                );
+                
+                if (response.ok) {
+                    item.remove();
+                    if (container.querySelectorAll('.task').length === 0) 
+                        showEmptyState('noTask');
+                    if (taskDetailPanel) taskDetailPanel.classList.remove('active');
+                } else showWarning('Lỗi khi xóa task');
+            } catch (err) {
+                if (Config.TEST) item.remove();
+                showWarning('Lỗi khi xóa task');
             }
         });
     }
