@@ -4,6 +4,7 @@
     margin: 0;
     font-family: Arial, sans-serif;
     color: white;
+    outline: 1px solid red;
 }
 
 body {
