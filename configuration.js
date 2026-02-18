@@ -1,2 +1,2 @@
 export const URL_API = "https://backend-u1p2.onrender.com";
-export const TEST = false;
+export const TEST = true;

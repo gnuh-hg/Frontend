@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let projectId = null;
     let nameProject = null;
     let isRedirecting = false;
-
+    document.querySelector('.task-detail-panel').classList.add('active');
     // Ẩn h1 và hiện empty state "chưa chọn project" lúc khởi tạo
     if (!Config.TEST) {
         container.querySelector('h1').style.display = 'none';
@@ -250,31 +250,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         try {
-            const response = await fetchWithAuth(`${Config.URL_API}/project/${projectId}/items`, {
-                method: 'POST', body: JSON.stringify({})
-            });
-            
-            if (response.ok) {
-                const item = await response.json();
-                renderItem(item);
-            } else {
-                const errorData = await response.json();
-                showWarning(`Không thể tạo mục mới: ${errorData.detail || 'Lỗi không xác định'}`);
-                if (Config.TEST) {
-                    cnt++;
-                    let pri = ['high', 'medium', 'low'];
-                    const item = {
-                        id: cnt, position: cnt, name: `Task ${cnt}`,
-                        priority: pri[Math.ceil(Math.random() * 10) % 3],
-                        start_date: new Date(new Date().setHours(0, 0, 0, 0)),
-                        due_date: new Date(new Date().setHours(23, 59, 59, 999)),
-                        time_spent: new Date('00:00:00'), note: ""
-                    };
-                    renderItem(item);
-                }
-            }
-        } catch (err) {
-            showWarning('Lỗi khi tạo task');
             if (Config.TEST) {
                 cnt++;
                 let pri = ['high', 'medium', 'low'];
@@ -286,7 +261,22 @@ document.addEventListener('DOMContentLoaded', function() {
                     time_spent: new Date('00:00:00'), note: ""
                 };
                 renderItem(item);
+                return;
             }
+
+            const response = await fetchWithAuth(`${Config.URL_API}/project/${projectId}/items`, {
+                method: 'POST', body: JSON.stringify({})
+            });
+
+            if (response.ok) {
+                const item = await response.json();
+                renderItem(item);
+            } else {
+                const errorData = await response.json();
+                showWarning(`Không thể tạo mục mới: ${errorData.detail || 'Lỗi không xác định'}`);
+            }
+        } catch (err) {
+            showWarning('Lỗi khi tạo task');
         }
     });
 
@@ -302,12 +292,213 @@ document.addEventListener('DOMContentLoaded', function() {
 
     document.addEventListener('click', function(e) {
         const panel = document.querySelector('.task-detail-panel');
+        const overlay_calendar = document.getElementById('taskCalendarOverlay');
+
         if (!panel || !panel.classList.contains('active')) return;
-        
+
+        // Nếu click vào overlay/calendar thì không đóng panel
+        if (overlay_calendar && overlay_calendar.contains(e.target)) return;
+
         if (panel.contains(e.target)) return;
-        
+
         panel.classList.remove('active');
     });
+
+    // ========== TASK DETAIL DATE PICKER ==========
+    class TaskDatePicker {
+        constructor() {
+            this.overlay = document.getElementById('taskCalendarOverlay');
+            this.popup = document.getElementById('taskCalendarPopup');
+            this.calendarDays = document.getElementById('taskCalendarDays');
+            this.monthSelect = document.getElementById('taskMonthSelect');
+
+            this.activeTarget = null; // 'start' or 'due'
+            this.startDate = null;
+            this.dueDate = null;
+            this.currentMonth = new Date().getMonth();
+            this.currentYear = new Date().getFullYear();
+
+            this.init();
+        }
+
+        init() {
+            // Populate year select
+            // Trong init(), xóa phần populate year select, thêm vào:
+            this.yearDisplay = document.getElementById('taskYearDisplay');
+            this.yearDisplay.textContent = this.currentYear;
+
+            document.getElementById('taskYearUp').addEventListener('click', () => {
+                this.currentYear++;
+                this.updateCalendar();
+            });
+
+            document.getElementById('taskYearDown').addEventListener('click', () => {
+                this.currentYear--;
+                this.updateCalendar();
+            });
+            this.monthSelect.value = this.currentMonth;
+
+            // Open calendar on button click
+            document.getElementById('startDateBtn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.activeTarget = 'start';
+                this.openCalendar();
+            });
+
+            document.getElementById('dueDateBtn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.activeTarget = 'due';
+                this.openCalendar();
+            });
+
+            // Close on overlay click
+            this.overlay.addEventListener('click', (e) => {
+                if (e.target === this.overlay) this.closeCalendar();
+            });
+
+            this.popup.addEventListener('click', (e) => e.stopPropagation());
+
+            document.getElementById('taskPrevMonthBtn').addEventListener('click', () => {
+                this.currentMonth--;
+                if (this.currentMonth < 0) { this.currentMonth = 11; this.currentYear--; }
+                this.updateCalendar();
+            });
+
+            document.getElementById('taskNextMonthBtn').addEventListener('click', () => {
+                this.currentMonth++;
+                if (this.currentMonth > 11) { this.currentMonth = 0; this.currentYear++; }
+                this.updateCalendar();
+            });
+
+            this.monthSelect.addEventListener('change', (e) => {
+                this.currentMonth = parseInt(e.target.value);
+                this.updateCalendar();
+            });
+
+            document.getElementById('taskTodayBtn').addEventListener('click', () => {
+                const today = new Date();
+                this.selectDate(today.getDate(), today.getMonth(), today.getFullYear());
+            });
+
+            document.getElementById('taskClearBtn').addEventListener('click', () => {
+                this.clearDate();
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && this.overlay.classList.contains('active')) {
+                    this.closeCalendar();
+                }
+            });
+
+            this.updateCalendar();
+        }
+
+        openCalendar() {
+            // Set current month/year to selected date if exists
+            const current = this.activeTarget === 'start' ? this.startDate : this.dueDate;
+            if (current) {
+                this.currentMonth = current.getMonth();
+                this.currentYear = current.getFullYear();
+            }
+            this.updateCalendar();
+            this.overlay.classList.add('active');
+        }
+
+        closeCalendar() {
+            this.overlay.classList.remove('active');
+            this.activeTarget = null;
+        }
+
+        updateCalendar() {
+            this.monthSelect.value = this.currentMonth;
+            this.yearDisplay.textContent = this.currentYear;
+            this.calendarDays.innerHTML = '';
+
+            const firstDay = new Date(this.currentYear, this.currentMonth, 1).getDay();
+            const lastDate = new Date(this.currentYear, this.currentMonth + 1, 0).getDate();
+            const prevLastDate = new Date(this.currentYear, this.currentMonth, 0).getDate();
+            const today = new Date();
+
+            const selectedDate = this.activeTarget === 'start' ? this.startDate : this.dueDate;
+
+            for (let i = firstDay; i > 0; i--) {
+                this.calendarDays.appendChild(this.createDay(prevLastDate - i + 1, this.currentMonth - 1, this.currentYear, true, selectedDate, today));
+            }
+            for (let i = 1; i <= lastDate; i++) {
+                this.calendarDays.appendChild(this.createDay(i, this.currentMonth, this.currentYear, false, selectedDate, today));
+            }
+            const total = this.calendarDays.children.length;
+            for (let i = 1; i <= 42 - total; i++) {
+                this.calendarDays.appendChild(this.createDay(i, this.currentMonth + 1, this.currentYear, true, selectedDate, today));
+            }
+        }
+
+        createDay(day, month, year, isOther, selectedDate, today) {
+            const div = document.createElement('div');
+            div.className = 'calendar-day';
+            div.textContent = day;
+            if (isOther) div.classList.add('other-month');
+
+            let actualMonth = month, actualYear = year;
+            if (month < 0) { actualMonth = 11; actualYear = year - 1; }
+            else if (month > 11) { actualMonth = 0; actualYear = year + 1; }
+
+            if (day === today.getDate() && actualMonth === today.getMonth() && actualYear === today.getFullYear()) {
+                div.classList.add('today');
+            }
+            if (selectedDate && day === selectedDate.getDate() && actualMonth === selectedDate.getMonth() && actualYear === selectedDate.getFullYear()) {
+                div.classList.add('selected');
+            }
+
+            div.addEventListener('click', () => this.selectDate(day, actualMonth, actualYear));
+            return div;
+        }
+
+        selectDate(day, month, year) {
+            const date = new Date(year, month, day);
+            const dd = String(day).padStart(2, '0');
+            const mm = String(month + 1).padStart(2, '0');
+            const formatted = `${dd}/${mm}/${year}`;
+
+            if (this.activeTarget === 'start') {
+                this.startDate = date;
+                const btn = document.getElementById('startDateBtn');
+                const text = document.getElementById('startDateText');
+                text.textContent = formatted;
+                text.classList.remove('placeholder');
+                btn.classList.add('has-date');
+            } else {
+                this.dueDate = date;
+                const btn = document.getElementById('dueDateBtn');
+                const text = document.getElementById('dueDateText');
+                text.textContent = formatted;
+                text.classList.remove('placeholder');
+                btn.classList.add('has-date');
+            }
+
+            this.closeCalendar();
+        }
+
+        clearDate() {
+            if (this.activeTarget === 'start') {
+                this.startDate = null;
+                const text = document.getElementById('startDateText');
+                text.textContent = 'Set date';
+                text.classList.add('placeholder');
+                document.getElementById('startDateBtn').classList.remove('has-date');
+            } else {
+                this.dueDate = null;
+                const text = document.getElementById('dueDateText');
+                text.textContent = 'Set date';
+                text.classList.add('placeholder');
+                document.getElementById('dueDateBtn').classList.remove('has-date');
+            }
+            this.closeCalendar();
+        }
+    }
+
+    // Khởi tạo
+    const taskDatePicker = new TaskDatePicker();
 
     let lastWarningTime = 0;
     function showWarning(warning_context) {
@@ -365,28 +556,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-// ========== DATE PICKER - SIMPLEST SOLUTION ==========
-// Date inputs are now INSIDE date-display, so they work automatically
-// We only need to handle the display update
-
-document.body.addEventListener('change', function(e) {
-    if (!e.target.classList.contains('date-input')) return;
-    
-    const targetId = e.target.id;
-    const dateDisplay = e.target.closest('.date-display');
-    
-    if (dateDisplay && e.target.value) {
-        const dateText = dateDisplay.querySelector('.date-text');
-        const date = new Date(e.target.value);
-        
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const year = date.getFullYear();
-        
-        dateText.textContent = `${day}/${month}/${year}`;
-    }
-}, true);
-    
     // ========== TIMER ==========
     const btnTimer = document.querySelector('.btn-timer');
     const timeValue = document.querySelector('.time-value');
@@ -441,7 +610,4 @@ document.body.addEventListener('change', function(e) {
             }
         });
     }
-    console.log('Start date input:', document.getElementById('start-date'));
-console.log('End date input:', document.getElementById('end-date'));
-console.log('Date displays:', document.querySelectorAll('.date-display'));
 });
