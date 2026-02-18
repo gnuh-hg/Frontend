@@ -1,4 +1,4 @@
-import * as Config from './../constants.js';
+import * as Config from './../configuration.js';
 
 document.addEventListener('DOMContentLoaded', function() {
     // DOM Elements

@@ -1,4 +1,4 @@
-import * as Config from '../../constants.js';
+import * as Config from '../../configuration.js';
 
 document.addEventListener('DOMContentLoaded', function() {
     const container = document.querySelector('.container-task');
@@ -6,10 +6,19 @@ document.addEventListener('DOMContentLoaded', function() {
     let nameProject = null;
     let isRedirecting = false;
 
+    // Ẩn h1 và hiện empty state "chưa chọn project" lúc khởi tạo
+    if (!Config.TEST) {
+        container.querySelector('h1').style.display = 'none';
+        showEmptyState('noProject');
+    } else {
+        showEmptyState('noTask');
+    }
+
     document.addEventListener('projectSelected', function(e) {
         projectId = e.detail.id;
         nameProject = e.detail.name;
 
+        container.querySelector('h1').style.display = '';
         container.querySelector('h1 p').innerHTML = nameProject;
         loadData();
     });
@@ -27,12 +36,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         if (response.status === 401) {
-            if (!isRedirecting) {  // ✅ Thêm check này
+            if (!isRedirecting && !Config.TEST) {
                 isRedirecting = true;
                 window.location.href = "./Account/login.html";
                 showWarning("Phiên làm việc hết hạn. Vui lòng đăng nhập lại.");
             }
-            throw new Error("Unauthorized"); // Ngăn code tiếp tục chạy
+            throw new Error("Unauthorized");
         }
         
         return response;
@@ -45,32 +54,116 @@ document.addEventListener('DOMContentLoaded', function() {
                 showWarning("Không thể tải dữ liệu");
                 return;
             }
-
+            document.querySelectorAll('.task').forEach(el => el.remove());
             let items = await response.json();
-            items.forEach(item => renderItem(item));
+            if (items.length === 0) {
+                showEmptyState('noTask');
+            } else {
+                hideEmptyState();
+                items.forEach(item => renderItem(item));
+            }
         } catch (err) {
             showWarning("Lỗi khi load dữ liệu");
         }
     }
 
+    function showEmptyState(type) {
+        container.querySelector('.empty-state')?.remove();
+
+        const cfg = type === 'noProject'
+            ? {
+                title: 'No project selected',
+                desc: 'Select a project from the left sidebar to get started',
+                svg: `
+                    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="tGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#a78bfa;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                        <g transform="translate(100, 95)">
+                            <rect x="-40" y="-32" width="80" height="64" rx="8"
+                                  fill="none" stroke="url(#tGrad1)" stroke-width="3.5"
+                                  stroke-linecap="round" stroke-linejoin="round"/>
+                            <line x1="-24" y1="-10" x2="24" y2="-10"
+                                  stroke="#6366f1" stroke-width="2.5" stroke-linecap="round" opacity="0.35"/>
+                            <line x1="-24" y1="2" x2="24" y2="2"
+                                  stroke="#6366f1" stroke-width="2.5" stroke-linecap="round" opacity="0.35"/>
+                            <line x1="-24" y1="14" x2="10" y2="14"
+                                  stroke="#6366f1" stroke-width="2.5" stroke-linecap="round" opacity="0.2"/>
+                        </g>
+                        <!-- Arrow pointing left -->
+                        <circle cx="68" cy="115" r="16" fill="#6366f1"/>
+                        <polyline points="73,108 63,115 73,122"
+                                  fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>`
+            }
+            : {
+                title: 'No tasks yet',
+                desc: 'Click "New task" above to create your first task',
+                svg: `
+                    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="tGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#a78bfa;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                        <g transform="translate(100, 95)">
+                            <rect x="-40" y="-32" width="80" height="64" rx="8"
+                                  fill="none" stroke="url(#tGrad2)" stroke-width="3.5"
+                                  stroke-linecap="round" stroke-linejoin="round"/>
+                            <line x1="-24" y1="-10" x2="24" y2="-10"
+                                  stroke="#6366f1" stroke-width="2.5" stroke-linecap="round" opacity="0.35"/>
+                            <line x1="-24" y1="2" x2="24" y2="2"
+                                  stroke="#6366f1" stroke-width="2.5" stroke-linecap="round" opacity="0.35"/>
+                            <line x1="-24" y1="14" x2="10" y2="14"
+                                  stroke="#6366f1" stroke-width="2.5" stroke-linecap="round" opacity="0.2"/>
+                        </g>
+                        <!-- Plus badge -->
+                        <circle cx="128" cy="115" r="16" fill="#6366f1"/>
+                        <line x1="128" y1="106" x2="128" y2="124"
+                              stroke="white" stroke-width="3" stroke-linecap="round"/>
+                        <line x1="119" y1="115" x2="137" y2="115"
+                              stroke="white" stroke-width="3" stroke-linecap="round"/>
+                    </svg>`
+            };
+
+        const el = document.createElement('div');
+        el.className = 'empty-state';
+        el.innerHTML = `${cfg.svg}<h3>${cfg.title}</h3><p>${cfg.desc}</p>`;
+        container.querySelector('.task-list').appendChild(el);
+    }
+
+    function hideEmptyState() {
+        container.querySelector('.empty-state')?.remove();
+    }
+
     function renderItem(item) {
-        let progress;
-        const start = new Date(item.start_date);
-        const due = new Date(item.due_date);
+        hideEmptyState();
+
+        let progress = 0;
+        const cleaned_start = typeof item.start_date === 'string'
+            ? item.start_date.replace(/(\.\d{3})\d*\.000Z$/, '$1Z') : item.start_date;
+        const cleaned_due = typeof item.due_date === 'string'
+            ? item.due_date.replace(/(\.\d{3})\d*\.000Z$/, '$1Z') : item.due_date;
+
+        const start = new Date(cleaned_start);
+        const due = new Date(cleaned_due);
         const now = new Date();
         
         if (isNaN(start.getTime()) || isNaN(due.getTime())) progress = 0;
-        if (now < start) progress = 0;
+        else if (now < start) progress = 0;
         else if (now > due) progress = 100;
         else {
             const totalMs = due - start;
             const passedMs = now - start;
-            const percentage = (passedMs / totalMs) * 100;
-            progress = Math.round(percentage);
+            progress = Math.round((passedMs / totalMs) * 100);
         }
 
         const html = `
-            <div class="task ${item.priority}">
+            <div class="task ${item.priority}" data-id="${item.id}">
               <div class="task-header">
                 <div class="task-name">${item.name}</div>
                 <button class="btn-done">Done</button>
@@ -100,7 +193,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function attachEvents(item){
-        //Nút done
         item.querySelector('.task-header button').addEventListener('click', async function (e) {
             e.stopPropagation();
             if (item.classList.contains('completed')) return;
@@ -124,34 +216,42 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     if (response.ok) {
                         item.remove();
-                        showWarning('Xóa task thành công');
+                        // Nếu không còn task nào thì hiện empty state
+                        if (container.querySelectorAll('.task').length === 0) 
+                            showEmptyState('noTask');
                     } else {
-                        item.remove();
+                        if (Config.TEST){
+                            item.remove();
+                            if (container.querySelectorAll('.task').length === 0) 
+                                showEmptyState('noTask');
+                        }
                         showWarning('Lỗi khi xóa task');
                     }
                 } catch (err) {
+                    if (Config.TEST) item.remove();
                     showWarning('Lỗi khi xóa task');
                 }
             }, 400);
         });
 
         const panel = document.querySelector('.task-detail-panel');
-        item.addEventListener('click',  (e) => {
+        item.addEventListener('click', (e) => {
+            e.stopPropagation();
             if (!panel) return;
-
-            if (panel.className.includes('active')) {
-                panel.classList.remove('active');
-            }
-
             panel.classList.add('active');
-        })
+        });
     }
 
     let cnt = 0;
     container.querySelector('h1 button').addEventListener('click', async (e) => {
+        if (!projectId && !Config.TEST) {
+            showWarning('Vui lòng chọn project trước!');
+            return;
+        }
+
         try {
             const response = await fetchWithAuth(`${Config.URL_API}/project/${projectId}/items`, {
-                method: 'POST', body: {}
+                method: 'POST', body: JSON.stringify({})
             });
             
             if (response.ok) {
@@ -160,22 +260,33 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 const errorData = await response.json();
                 showWarning(`Không thể tạo mục mới: ${errorData.detail || 'Lỗi không xác định'}`);
-                cnt++;
-                let pri = ['high', 'medium', 'low'];
-                const item = {
-                    id: cnt,
-                    position: cnt,
-                    name: `Task ${cnt}`,
-                    priority: pri[Math.ceil(Math.random() * 10) % 3],
-                    start_date: new Date(new Date().setHours(0, 0, 0, 0)),
-                    due_date: new Date(new Date().setHours(23, 59, 59, 999)),
-                    time_spent: new Date('00:00:00'),
-                    note: ""
-                };
-                renderItem(item);
+                if (Config.TEST) {
+                    cnt++;
+                    let pri = ['high', 'medium', 'low'];
+                    const item = {
+                        id: cnt, position: cnt, name: `Task ${cnt}`,
+                        priority: pri[Math.ceil(Math.random() * 10) % 3],
+                        start_date: new Date(new Date().setHours(0, 0, 0, 0)),
+                        due_date: new Date(new Date().setHours(23, 59, 59, 999)),
+                        time_spent: new Date('00:00:00'), note: ""
+                    };
+                    renderItem(item);
+                }
             }
         } catch (err) {
             showWarning('Lỗi khi tạo task');
+            if (Config.TEST) {
+                cnt++;
+                let pri = ['high', 'medium', 'low'];
+                const item = {
+                    id: cnt, position: cnt, name: `Task ${cnt}`,
+                    priority: pri[Math.ceil(Math.random() * 10) % 3],
+                    start_date: new Date(new Date().setHours(0, 0, 0, 0)),
+                    due_date: new Date(new Date().setHours(23, 59, 59, 999)),
+                    time_spent: new Date('00:00:00'), note: ""
+                };
+                renderItem(item);
+            }
         }
     });
 
@@ -189,14 +300,21 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Hàm hiển thị cảnh báo
+    document.addEventListener('click', function(e) {
+        const panel = document.querySelector('.task-detail-panel');
+        if (!panel || !panel.classList.contains('active')) return;
+        
+        if (panel.contains(e.target)) return;
+        
+        panel.classList.remove('active');
+    });
+
     let lastWarningTime = 0;
     function showWarning(warning_context) {
         const currentTime = Date.now();
         if (currentTime - lastWarningTime < 3000) return;
         lastWarningTime = currentTime;
 
-        // Tạo tooltip cảnh báo
         const existingWarning = document.querySelector('.warning');
         if (existingWarning) existingWarning.remove();
 
@@ -204,108 +322,72 @@ document.addEventListener('DOMContentLoaded', function() {
         warning.className = 'warning';
         warning.textContent = warning_context;
         warning.style.cssText = `
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #ef4444;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            z-index: 10000;
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            background: #ef4444; color: white; padding: 12px 24px;
+            border-radius: 8px; font-size: 14px; font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 10000;
             animation: slideDown 0.3s ease-out;
         `;
-
         document.body.appendChild(warning);
-
-        // Tự động ẩn sau 3 giây
         setTimeout(() => {
             warning.style.animation = 'slideUp 0.3s ease-out';
             setTimeout(() => warning.remove(), 300);
         }, 3000);
     }
 
-    function showDate(date) {
+    function showDate(_date) {
+        const cleaned = typeof _date === 'string' 
+            ? _date.replace(/(\.\d{3})\d*\.000Z$/, '$1Z') 
+            : _date;
+        const date = new Date(cleaned);
         const d = String(date.getDate()).padStart(2, '0');
         const m = String(date.getMonth() + 1).padStart(2, '0');
         const y = date.getFullYear();
         return `${d}/${m}/${y}`;
     }
 
+// ========== PRIORITY BADGE ==========
     const priorityBadge = document.querySelector('.priority-badge');
     const priorities = ['low', 'medium', 'high'];
-    let currentPriorityIndex = 2; // Start with 'high'
+    let currentPriorityIndex = 2;
     
-    // Priority badge click handler
-    priorityBadge.addEventListener('click', function() {
-        // Cycle to next priority
-        currentPriorityIndex = (currentPriorityIndex + 1) % priorities.length;
-        const newPriority = priorities[currentPriorityIndex];
-        
-        // Remove all priority classes
-        priorityBadge.classList.remove('low', 'medium', 'high');
-        
-        // Add new priority class
-        priorityBadge.classList.add(newPriority);
-        
-        // Update text
-        const priorityText = newPriority.charAt(0).toUpperCase() + newPriority.slice(1);
-        priorityBadge.querySelector('span').textContent = priorityText;
-    });
-    
-    // Date picker functionality
-    const dateDisplays = document.querySelectorAll('.date-display');
-    
-    dateDisplays.forEach(display => {
-        display.addEventListener('click', function() {
-            const targetId = this.getAttribute('data-target');
-            const dateInput = document.getElementById(targetId);
+    if (priorityBadge) {
+        priorityBadge.addEventListener('click', function(e) {
+            e.stopPropagation();
+            currentPriorityIndex = (currentPriorityIndex + 1) % priorities.length;
+            const newPriority = priorities[currentPriorityIndex];
             
-            if (dateInput) {
-                dateInput.showPicker(); // Modern browsers
-                
-                // Fallback for older browsers
-                dateInput.click();
-            }
-        });
-    });
-    
-    // Handle date input change
-    const startDateInput = document.getElementById('start-date');
-    const endDateInput = document.getElementById('end-date');
-    
-    if (startDateInput) {
-        startDateInput.addEventListener('change', function() {
-            updateDateDisplay(this, 'start-date');
+            priorityBadge.classList.remove('low', 'medium', 'high');
+            priorityBadge.classList.add(newPriority);
+            
+            const priorityText = newPriority.charAt(0).toUpperCase() + newPriority.slice(1);
+            priorityBadge.querySelector('span').textContent = priorityText;
         });
     }
     
-    if (endDateInput) {
-        endDateInput.addEventListener('change', function() {
-            updateDateDisplay(this, 'end-date');
-        });
-    }
+// ========== DATE PICKER - SIMPLEST SOLUTION ==========
+// Date inputs are now INSIDE date-display, so they work automatically
+// We only need to handle the display update
+
+document.body.addEventListener('change', function(e) {
+    if (!e.target.classList.contains('date-input')) return;
     
-    // Function to update date display
-    function updateDateDisplay(input, targetId) {
-        const dateDisplay = document.querySelector(`.date-display[data-target="${targetId}"]`);
-        if (dateDisplay && input.value) {
-            const dateText = dateDisplay.querySelector('.date-text');
-            const date = new Date(input.value);
-            
-            // Format date as dd/mm/yyyy
-            const day = String(date.getDate()).padStart(2, '0');
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const year = date.getFullYear();
-            
-            dateText.textContent = `${day}/${month}/${year}`;
-        }
-    }
+    const targetId = e.target.id;
+    const dateDisplay = e.target.closest('.date-display');
     
-    // Timer functionality (bonus)
+    if (dateDisplay && e.target.value) {
+        const dateText = dateDisplay.querySelector('.date-text');
+        const date = new Date(e.target.value);
+        
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        
+        dateText.textContent = `${day}/${month}/${year}`;
+    }
+}, true);
+    
+    // ========== TIMER ==========
     const btnTimer = document.querySelector('.btn-timer');
     const timeValue = document.querySelector('.time-value');
     let timerInterval = null;
@@ -313,9 +395,10 @@ document.addEventListener('DOMContentLoaded', function() {
     let isTimerRunning = false;
     
     if (btnTimer) {
-        btnTimer.addEventListener('click', function() {
+        btnTimer.addEventListener('click', function(e) {
+            e.stopPropagation();
+            
             if (isTimerRunning) {
-                // Stop timer
                 clearInterval(timerInterval);
                 btnTimer.classList.remove('active');
                 btnTimer.innerHTML = `
@@ -325,10 +408,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 `;
                 isTimerRunning = false;
             } else {
-                // Start timer
                 timerInterval = setInterval(function() {
                     totalSeconds++;
-                    updateTimeDisplay();
+                    const hours = Math.floor(totalSeconds / 3600);
+                    const minutes = Math.floor((totalSeconds % 3600) / 60);
+                    timeValue.textContent = `${hours}h ${minutes}m`;
                 }, 1000);
                 
                 btnTimer.classList.add('active');
@@ -343,32 +427,21 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    function updateTimeDisplay() {
-        const hours = Math.floor(totalSeconds / 3600);
-        const minutes = Math.floor((totalSeconds % 3600) / 60);
-        timeValue.textContent = `${hours}h ${minutes}m`;
-    }
-    
-    // Close button functionality
-    const btnCloseDetail = document.querySelector('.btn-close-detail');
-    const taskDetailPanel = document.querySelector('.task-detail-panel');
-    
-    if (btnCloseDetail && taskDetailPanel) {
-        btnCloseDetail.addEventListener('click', function() {
-            taskDetailPanel.classList.remove('active');
-        });
-    }
-    
-    // Delete button functionality
+    // ========== DELETE TASK ==========
     const btnDeleteTask = document.querySelector('.btn-delete-task');
-    
     if (btnDeleteTask) {
-        btnDeleteTask.addEventListener('click', function() {
+        btnDeleteTask.addEventListener('click', function(e) {
+            e.stopPropagation();
             if (confirm('Bạn có chắc chắn muốn xóa task này?')) {
-                // Add your delete logic here
-                taskDetailPanel.classList.remove('active');
+                const taskDetailPanel = document.querySelector('.task-detail-panel');
+                if (taskDetailPanel) {
+                    taskDetailPanel.classList.remove('active');
+                }
                 console.log('Task deleted');
             }
         });
     }
+    console.log('Start date input:', document.getElementById('start-date'));
+console.log('End date input:', document.getElementById('end-date'));
+console.log('Date displays:', document.querySelectorAll('.date-display'));
 });
