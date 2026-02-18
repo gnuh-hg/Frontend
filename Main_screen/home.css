@@ -10,6 +10,7 @@ body {
     background: linear-gradient(135deg, #0e0d12 0%, #1a1625 100%);
     align-items: center;
     justify-content: center;
+    overflow-x: hidden;
 }
 
 .container {
