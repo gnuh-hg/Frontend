@@ -4,7 +4,6 @@
     margin: 0;
     font-family: Arial, sans-serif;
     color: white;
-    outline: 1px solid red;
 }
 
 body {
@@ -22,6 +21,8 @@ body {
   width: 3px;
   height: 3px;
 }
+
+::-webkit-scrollbar:horizontal { display: none; }
 
 ::-webkit-scrollbar-track {
   background: transparent;
