@@ -5,6 +5,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let projectId = null;
     let nameProject = null;
     let isRedirecting = false;
+    let activeItem = null;
+    let activeData = null;
 
     // Ẩn h1 và hiện empty state "chưa chọn project" lúc khởi tạo
     if (!Config.TEST) {
@@ -144,13 +146,9 @@ document.addEventListener('DOMContentLoaded', function() {
         hideEmptyState();
 
         let progress = 0;
-        const cleaned_start = typeof item.start_date === 'string'
-            ? item.start_date.replace(/(\.\d{3})\d*\.000Z$/, '$1Z') : item.start_date;
-        const cleaned_due = typeof item.due_date === 'string'
-            ? item.due_date.replace(/(\.\d{3})\d*\.000Z$/, '$1Z') : item.due_date;
 
-        const start = new Date(cleaned_start);
-        const due = new Date(cleaned_due);
+        const start = new Date(item.start_date);
+        const due = new Date(item.due_date);
         const now = new Date();
         
         if (isNaN(start.getTime()) || isNaN(due.getTime())) progress = 0;
@@ -191,7 +189,7 @@ document.addEventListener('DOMContentLoaded', function() {
         wrapper.insertAdjacentHTML('beforeend', html);
         attachEvents(wrapper.lastElementChild, item);
     }
-
+    
     function attachEvents(item, data){
         item.querySelector('.task-header button').addEventListener('click', async function (e) {
             e.stopPropagation();
@@ -207,6 +205,12 @@ document.addEventListener('DOMContentLoaded', function() {
             this.textContent = '✓ Done';
 
             setTimeout(async () => {
+                if (Config.TEST){
+                    item.remove();
+                    if (container.querySelectorAll('.task').length === 0) 
+                        showEmptyState('noTask');
+                    return;
+                }
                 try {
                     const response = await fetchWithAuth(
                         `${Config.URL_API}/project/${projectId}/items/${data.id}`, 
@@ -219,15 +223,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (container.querySelectorAll('.task').length === 0) 
                             showEmptyState('noTask');
                     } else {
-                        if (Config.TEST){
-                            item.remove();
-                            if (container.querySelectorAll('.task').length === 0) 
-                                showEmptyState('noTask');
-                        }
                         showWarning('Lỗi khi xóa task');
                     }
                 } catch (err) {
-                    if (Config.TEST) item.remove();
                     showWarning('Lỗi khi xóa task');
                 }
             }, 400);
@@ -248,6 +246,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const time_spent = panel.querySelector('.time-value');
             const notes = panel.querySelector('.notes-textarea');
         
+            activeItem = item;
+            activeData = data;
             name.value = data.name;
             priority.classList.remove('low', 'medium', 'high');
             priority.classList.add(data.priority);
@@ -279,6 +279,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 taskDatePicker.dueDate = null;
             }
             time_spent.innerHTML = `${data.time_spent} h`;
+            notes.innerHTML = data.notes;
         
             panel.classList.add('active');
         });
@@ -581,10 +582,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // ========== PRIORITY BADGE ==========
     const priorityBadge = document.querySelector('.priority-badge');
     const priorities = ['low', 'medium', 'high'];
-    let currentPriorityIndex = 2;
+    let currentPriorityIndex;
     
     if (priorityBadge) {
-        priorityBadge.addEventListener('click', function(e) {
+        priorityBadge.addEventListener('click', async function(e) {
+            const item = document.querySelector(`.task[data-id="${activeData.id}"]`);
             if (priorityBadge.classList.contains('low')) currentPriorityIndex = 0;
             if (priorityBadge.classList.contains('medium')) currentPriorityIndex = 1;
             if (priorityBadge.classList.contains('high')) currentPriorityIndex = 2;
@@ -592,15 +594,33 @@ document.addEventListener('DOMContentLoaded', function() {
             e.stopPropagation();
             currentPriorityIndex = (currentPriorityIndex + 1) % priorities.length;
             const newPriority = priorities[currentPriorityIndex];
-            
+
             priorityBadge.classList.remove('low', 'medium', 'high');
+            item.classList.remove('low', 'medium', 'high');
             priorityBadge.classList.add(newPriority);
+            item.classList.add(newPriority);
             
             const priorityText = newPriority.charAt(0).toUpperCase() + newPriority.slice(1);
             priorityBadge.querySelector('span').textContent = priorityText;
+
+            if (Config.TEST) return;
+
+            try {
+                const response = await fetchWithAuth(`${Config.URL_API}/project/${projectId}/items/${activeData.id}`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({
+                        priority: newPriority
+                    })
+                });
+                if (!response.ok) {
+                    showWarning("Không thể đổi độ quan trọng");
+                }
+            } catch (err) {
+                showWarning("Lỗi khi load dữ liệu");
+            }
         });
     }
-    
+
     // ========== TIMER ==========
     const btnTimer = document.querySelector('.btn-timer');
     let timerInterval = null;
@@ -632,36 +652,36 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-    
+
     // ========== DELETE TASK ==========
     const btnDeleteTask = document.querySelector('.btn-delete-task');
+    const panel = document.querySelector('.task-detail-panel');
     if (btnDeleteTask) {
         btnDeleteTask.addEventListener('click', async function(e) {
             e.stopPropagation();
-            const taskDetailPanel = document.querySelector('.task-detail-panel');
+            if (!activeItem) return;
 
-            if (Config.TEST){
-                item.remove();
+            if (Config.TEST) {
+                activeItem.remove();
                 if (container.querySelectorAll('.task').length === 0) 
                     showEmptyState('noTask');
-                if (taskDetailPanel) taskDetailPanel.classList.remove('active');
+                if (panel) panel.classList.remove('active');
                 return;
             }
 
             try {
                 const response = await fetchWithAuth(
-                    `${Config.URL_API}/project/${projectId}/items/${data.id}`, 
+                    `${Config.URL_API}/project/${projectId}/items/${activeData.id}`, 
                     { method: 'DELETE' }
                 );
-                
+
                 if (response.ok) {
-                    item.remove();
+                    activeItem.remove();
                     if (container.querySelectorAll('.task').length === 0) 
                         showEmptyState('noTask');
-                    if (taskDetailPanel) taskDetailPanel.classList.remove('active');
+                    if (panel) panel.classList.remove('active');
                 } else showWarning('Lỗi khi xóa task');
             } catch (err) {
-                if (Config.TEST) item.remove();
                 showWarning('Lỗi khi xóa task');
             }
         });
