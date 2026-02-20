@@ -349,6 +349,74 @@ document.addEventListener('DOMContentLoaded', function() {
         panel.classList.remove('active');
     });
 
+    // ========== NAME TASK ==========
+    const nameInput = document.querySelector('.detail-task-name');
+    let nameDebounceTimer = null;
+    
+    if (nameInput) {
+        nameInput.addEventListener('input', function () {
+            const newName = nameInput.value.trim();
+            if (!newName || !activeData) return;
+        
+            // Cập nhật UI ngay
+            if (activeItem) {
+                activeItem.querySelector('.task-name').textContent = newName;
+            }
+            activeData.name = newName;
+        
+            if (Config.TEST) return;
+        
+            clearTimeout(nameDebounceTimer);
+            nameDebounceTimer = setTimeout(async () => {
+                if (Config.TEST) return;
+                try {
+                    await fetchWithAuth(
+                        `${Config.URL_API}/project/${projectId}/items/${activeData.id}`,
+                        { method: 'PATCH', body: JSON.stringify({ name: newName }) }
+                    );
+                } catch {}
+            }, 500);
+        });
+    }
+
+    // ========== PRIORITY BADGE ==========
+    const priorityBadge = document.querySelector('.priority-badge');
+    const priorities = ['low', 'medium', 'high'];
+    let currentPriorityIndex;
+    let priorityDebounceTimer = null;
+
+    if (priorityBadge) {
+        priorityBadge.addEventListener('click', function(e) {
+            e.stopPropagation();
+
+            const item = document.querySelector(`.task[data-id="${activeData.id}"]`);
+            if (priorityBadge.classList.contains('low')) currentPriorityIndex = 0;
+            if (priorityBadge.classList.contains('medium')) currentPriorityIndex = 1;
+            if (priorityBadge.classList.contains('high')) currentPriorityIndex = 2;
+
+            currentPriorityIndex = (currentPriorityIndex + 1) % priorities.length;
+            const newPriority = priorities[currentPriorityIndex];
+        
+            // Cập nhật UI ngay
+            priorityBadge.classList.remove('low', 'medium', 'high');
+            item.classList.remove('low', 'medium', 'high');
+            priorityBadge.classList.add(newPriority);
+            item.classList.add(newPriority);
+            priorityBadge.querySelector('span').textContent = newPriority.charAt(0).toUpperCase() + newPriority.slice(1);
+
+            if (Config.TEST) return;
+
+            // Chỉ delay phần gửi backend
+            clearTimeout(priorityDebounceTimer);
+            priorityDebounceTimer = setTimeout(() => {
+                fetchWithAuth(`${Config.URL_API}/project/${projectId}/items/${activeData.id}`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ priority: newPriority })
+                }).catch(() => showWarning("Không thể đổi độ quan trọng"));
+            }, 500);
+        });
+    }
+
     // ========== TASK DETAIL DATE PICKER ==========
     class TaskDatePicker {
         constructor() {
@@ -516,6 +584,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 this.dueDate = date;
                 const btn = document.getElementById('dueDateBtn');
                 const text = document.getElementById('dueDateText');
+                const item = document.querySelector(`.task[data-id="${activeData.id}"]`);
+                item.querySelector('.task-deadline span').innerHTML = `Due: ${formatted}`;
                 text.textContent = formatted;
                 text.classList.remove('placeholder');
                 btn.classList.add('has-date');
@@ -544,82 +614,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Khởi tạo
     const taskDatePicker = new TaskDatePicker();
-
-    let lastWarningTime = 0;
-    function showWarning(warning_context) {
-        const currentTime = Date.now();
-        if (currentTime - lastWarningTime < 3000) return;
-        lastWarningTime = currentTime;
-
-        const existingWarning = document.querySelector('.warning');
-        if (existingWarning) existingWarning.remove();
-
-        const warning = document.createElement('div');
-        warning.className = 'warning';
-        warning.textContent = warning_context;
-        warning.style.cssText = `
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-            background: #ef4444; color: white; padding: 12px 24px;
-            border-radius: 8px; font-size: 14px; font-weight: 500;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 10000;
-            animation: slideDown 0.3s ease-out;
-        `;
-        document.body.appendChild(warning);
-        setTimeout(() => {
-            warning.style.animation = 'slideUp 0.3s ease-out';
-            setTimeout(() => warning.remove(), 300);
-        }, 3000);
-    }
-
-    function showDate(_date) {
-        const date = new Date(_date);
-        const d = String(date.getDate()).padStart(2, '0');
-        const m = String(date.getMonth() + 1).padStart(2, '0');
-        const y = date.getFullYear();
-        return `${d}/${m}/${y}`;
-    }
-
-    // ========== PRIORITY BADGE ==========
-    const priorityBadge = document.querySelector('.priority-badge');
-    const priorities = ['low', 'medium', 'high'];
-    let currentPriorityIndex;
-    
-    if (priorityBadge) {
-        priorityBadge.addEventListener('click', async function(e) {
-            const item = document.querySelector(`.task[data-id="${activeData.id}"]`);
-            if (priorityBadge.classList.contains('low')) currentPriorityIndex = 0;
-            if (priorityBadge.classList.contains('medium')) currentPriorityIndex = 1;
-            if (priorityBadge.classList.contains('high')) currentPriorityIndex = 2;
-
-            e.stopPropagation();
-            currentPriorityIndex = (currentPriorityIndex + 1) % priorities.length;
-            const newPriority = priorities[currentPriorityIndex];
-
-            priorityBadge.classList.remove('low', 'medium', 'high');
-            item.classList.remove('low', 'medium', 'high');
-            priorityBadge.classList.add(newPriority);
-            item.classList.add(newPriority);
-            
-            const priorityText = newPriority.charAt(0).toUpperCase() + newPriority.slice(1);
-            priorityBadge.querySelector('span').textContent = priorityText;
-
-            if (Config.TEST) return;
-
-            try {
-                const response = await fetchWithAuth(`${Config.URL_API}/project/${projectId}/items/${activeData.id}`, {
-                    method: 'PATCH',
-                    body: JSON.stringify({
-                        priority: newPriority
-                    })
-                });
-                if (!response.ok) {
-                    showWarning("Không thể đổi độ quan trọng");
-                }
-            } catch (err) {
-                showWarning("Lỗi khi load dữ liệu");
-            }
-        });
-    }
 
     // ========== TIMER ==========
     const btnTimer = document.querySelector('.btn-timer');
@@ -650,6 +644,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 `;
                 isTimerRunning = true;
             }
+        });
+    }
+
+    // ========== NOTES ==========
+    const notesTextarea = document.querySelector('.notes-textarea');
+    let notesDebounceTimer = null;
+
+    if (notesTextarea) {
+        notesTextarea.addEventListener('input', function () {
+            const newNotes = notesTextarea.value;
+
+            // Cập nhật UI ngay
+            activeData.notes = newNotes;
+
+            // Chỉ delay phần gửi backend
+            clearTimeout(notesDebounceTimer);
+            notesDebounceTimer = setTimeout(() => {
+                if (Config.TEST) return;
+                fetchWithAuth(`${Config.URL_API}/project/${projectId}/items/${activeData.id}`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ notes: newNotes })
+                }).catch(() => showWarning("Không thể lưu ghi chú"));
+            }, 500);
         });
     }
 
@@ -685,5 +702,71 @@ document.addEventListener('DOMContentLoaded', function() {
                 showWarning('Lỗi khi xóa task');
             }
         });
+    }
+
+    // ========== DRAG & DROP ==========
+    let reorderDebounceTimer = null;
+    
+    function sendReorder() {
+        clearTimeout(reorderDebounceTimer);
+        reorderDebounceTimer = setTimeout(async () => {
+            if (Config.TEST) return;
+            const tasks = [...taskList.querySelectorAll('.task')];
+            const body = tasks.map((el, index) => ({
+                id: parseInt(el.dataset.id),
+                position: index + 1
+            }));
+        
+    fetchWithAuth(`${Config.URL_API}/project/${projectId}/items/reorder`, {
+        method: 'PATCH',
+        body: JSON.stringify(body)
+    }).then(async res => {
+        if (!res.ok) {
+            const err = await res.json();
+            console.error('[REORDER]', res.status, err);
+        }
+    }).catch(() => showWarning("Không thể cập nhật vị trí"));
+        }, 500);
+    }
+    
+    const taskList = container.querySelector('.task-list');
+    new Sortable(taskList, {
+        animation: 150,
+        ghostClass: 'sortable-ghost',
+        onEnd: function() { sendReorder(); }
+    });
+
+    let lastWarningTime = 0;
+    function showWarning(warning_context) {
+        const currentTime = Date.now();
+        if (currentTime - lastWarningTime < 3000) return;
+        lastWarningTime = currentTime;
+
+        const existingWarning = document.querySelector('.warning');
+        if (existingWarning) existingWarning.remove();
+
+        const warning = document.createElement('div');
+        warning.className = 'warning';
+        warning.textContent = warning_context;
+        warning.style.cssText = `
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            background: #ef4444; color: white; padding: 12px 24px;
+            border-radius: 8px; font-size: 14px; font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 10000;
+            animation: slideDown 0.3s ease-out;
+        `;
+        document.body.appendChild(warning);
+        setTimeout(() => {
+            warning.style.animation = 'slideUp 0.3s ease-out';
+            setTimeout(() => warning.remove(), 300);
+        }, 3000);
+    }
+
+    function showDate(_date) {
+        const date = new Date(_date);
+        const d = String(date.getDate()).padStart(2, '0');
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const y = date.getFullYear();
+        return `${d}/${m}/${y}`;
     }
 });

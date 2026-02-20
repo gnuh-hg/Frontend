@@ -1053,3 +1053,14 @@ h1 .btn-done:hover {
     text-align: center;
     user-select: none;
 }
+
+.task {
+    user-select: none;
+}
+.task:active {
+    cursor: grabbing;
+}
+
+.task.sortable-ghost {
+    opacity: 0.4;
+}
