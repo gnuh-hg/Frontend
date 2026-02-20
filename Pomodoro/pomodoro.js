@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', function () {
-
     // --- 1. DOM ELEMENTS ---
     const overlay          = document.getElementById('taskOverlay');
     const taskModal        = document.getElementById('taskModal');
@@ -20,7 +19,7 @@ document.addEventListener('DOMContentLoaded', function () {
         { id_task: 2, name_task: 'Review backend API code' },
         { id_task: 3, name_task: 'Write documentation' },
         { id_task: 4, name_task: 'Fix bug in login module' },
-        { id_task: 5, name_task: 'Meeting planning sprint Q2' },
+        { id_task: 5, name_task: 'Meeting planning sprint Q2' }
     ];
 
     let selectedTask = null;
@@ -273,12 +272,11 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function closePomodoro() {
-        if (window.parent && window.parent !== window) {
-            window.parent.postMessage({ type: 'pomodoro-close' }, '*');
-        } else {
-            document.body.style.transition = 'opacity 0.3s';
-            document.body.style.opacity = '0';
-        }
+        document.body.style.transition = 'opacity 0.3s';
+        document.body.style.opacity = '0';
+        setTimeout(() => {
+            window.location.href = '../index.html';
+        }, 300);
     }
 
     // --- 8. UI EVENT BINDINGS ---

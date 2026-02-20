@@ -1,79 +1,150 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
     <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
         <title>Taskora</title>
-        <link rel="stylesheet" href="./Main_screen/home.css" />
-        <script type="module" src="./Main_screen/home.js" defer></script>
 
-        <link rel="stylesheet" href="./Main_screen/app_header/app_header.css" />
-        <script type="module" src="./Main_screen/app_header/app_header.js" defer></script>
+        <link rel="stylesheet" href="./main_screen/home.css" />
+        <script type="module" src="./main_screen/home.js" defer></script>
 
-        <link rel="stylesheet" href="./Main_screen/sidebar_nav/sidebar_nav.css" />
-        <script type="module" src="./Main_screen/sidebar_nav/sidebar_nav.js" defer></script>
+        <link rel="stylesheet" href="./main_screen/app_header/app_header.css" />
+        <script type="module" src="./main_screen/app_header/app_header.js" defer></script>
 
-        <link rel="stylesheet" href="./Main_screen/container_task/container_task.css" />
-        <script type="module" src="./Main_screen/container_task/container_task.js" defer></script>
+        <link rel="stylesheet" href="./main_screen/sidebar_nav/sidebar_nav.css" />
+        <script type="module" src="./main_screen/sidebar_nav/sidebar_nav.js" defer></script>
 
-        <link rel="stylesheet" href="./Main_screen/pomodoro/pomodoro.css">
+        <link rel="stylesheet" href="./main_screen/container_task/container_task.css" />
+        <script type="module" src="./main_screen/container_task/container_task.js" defer></script>
+
+        <link rel="stylesheet" href="./main_screen/pomodoro/pomodoro.css">
         
         <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     </head>
     <body>
+        <!-- App Header -->
         <div class="app-header">
-            <div class="user-profile">
-                <img class="logo-web" src="./logo_web.png" width="50px" height="50px"/>
-                <p class="username">Username</p>
+            <!-- User Profile (Left) -->
+            <div class="user-profile" id="userProfile">
+                <img class="logo-web" src="./logo_web.png" alt="Logo" id="profileImage">
+                <p class="username" id="usernameDisplay">Loading...</p>
+                <svg class="profile-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
             </div>
-
-            <ul class="header-nav">
-               <li class="nav-item">
-                <svg viewBox="0 0 24 24">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="9" cy="7" r="4"></circle>
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                </svg>
-               </li> 
-               <li class="nav-item">
-                <svg viewBox="0 0 24 24">
-                    <path d="M12 20V10"></path>
-                    <path d="M12 10C12 6 15 4 18 4c0 4-3 6-6 6Z"></path>
-                    <path d="M12 10C12 6 9 4 6 4c0 4 3 6 6 6Z"></path>
-                </svg>
-               </li>
-               <li class="nav-item">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
-                        <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
-                        <path d="M4 22h16"></path>
-                        <path d="M10 22V18"></path>
-                        <path d="M14 22V18"></path>
-                        <path d="M18 4H6v7a6 6 0 0 0 12 0V4Z"></path>
+        
+            <!-- Navigation Buttons (Right) -->
+            <div class="nav-buttons">
+                <a href="./pomodoro/pomodoro.html" class="nav-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
                     </svg>
-               </li>
-               <li class="nav-item">
-                <svg viewBox="0 0 24 24">
-                    <line x1="18" y1="20" x2="18" y2="10"></line>
-                    <line x1="14" y1="20" x2="14" y2="13"></line>
-                    <line x1="10" y1="20" x2="10" y2="15"></line>
-                    <line x1="6" y1="20" x2="6" y2="17"></line>
-                    <polyline points="6 14 10 12 14 10 18 7"></polyline>
-                    <polyline points="15 7 18 7 18 10"></polyline>
-                </svg>
-               </li>
-               <li class="nav-item">
-                <svg viewBox="0 0 24 24">
-                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-                </svg>
-               </li>
-               <li class="nav-item">
-                    <svg viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="3"></circle>
-                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    <span class="nav-btn-text">Pomodoro</span>
+                </a>
+                
+                <a href="./statistics/statistics.html" class="nav-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="20" x2="12" y2="10"></line>
+                        <line x1="18" y1="20" x2="18" y2="4"></line>
+                        <line x1="6" y1="20" x2="6" y2="16"></line>
                     </svg>
-               </li>
-            </ul>
+                    <span class="nav-btn-text">Statistics</span>
+                </a>
+            </div>
+        </div>
+    
+        <!-- Profile Dropdown -->
+        <div class="profile-dropdown" id="profileDropdown">
+            <!-- Profile Header -->
+            <div class="profile-header">
+                <div class="profile-info">
+                    <div class="profile-name" id="dropdownName">Username</div>
+                    <div class="profile-email" id="dropdownEmail">email@example.com</div>
+                </div>
+            </div>
+        
+            <!-- Edit Name Section -->
+            <div class="edit-name-section">
+                <label class="edit-name-label">Change display name</label>
+                <input type="text" class="edit-name-input" id="nameInput" placeholder="Enter new name">
+                <div class="confirm-box">
+                    <p id="btnCancelName">Cancel</p>
+                    <p class="btn-accept" id="btnSaveName">Save</p>
+                </div>
+            </div>
+        
+            <!-- Divider -->
+            <div class="section-divider"></div>
+        
+            <!-- Change Password Section (Collapsible) -->
+            <div class="collapsible-section">
+                <div class="collapsible-header" id="passwordHeader">
+                    <div class="collapsible-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
+                        <span>Change password</span>
+                    </div>
+                    <svg class="collapsible-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </div>
+                
+                <div class="collapsible-content" id="passwordContent">
+                    <div class="collapsible-body">
+                        <div class="password-section">
+                            <label class="password-label">Current password</label>
+                            <div class="password-input-wrapper">
+                                <input type="password" class="password-input" id="currentPassword" placeholder="Enter current password">
+                                <svg class="password-toggle" id="toggleCurrent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </div>
+                        
+                            <label class="password-label">New password</label>
+                            <div class="password-input-wrapper">
+                                <input type="password" class="password-input" id="newPassword" placeholder="Enter new password">
+                                <svg class="password-toggle" id="toggleNew" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </div>
+                            <p class="password-hint">At least 6 characters</p>
+                        
+                            <label class="password-label">Confirm new password</label>
+                            <div class="password-input-wrapper">
+                                <input type="password" class="password-input" id="confirmPassword" placeholder="Re-enter new password">
+                                <svg class="password-toggle" id="toggleConfirm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </div>
+                        
+                            <div class="confirm-box">
+                                <p id="btnCancelPassword">Cancel</p>
+                                <p class="btn-accept" id="btnSavePassword">Change password</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        
+            <!-- Divider -->
+            <div class="section-divider"></div>
+        
+            <!-- Logout Button -->
+            <button class="btn-logout" id="btnLogout">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+                Logout
+            </button>
         </div>
         <div class="container">
             <div class="sidebar-nav">

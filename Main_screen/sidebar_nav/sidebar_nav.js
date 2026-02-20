@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (response.status === 401) {
             if (!isRedirecting && !Config.TEST) {
                 isRedirecting = true;
-                window.location.href = "./Account/login.html";
+                window.location.href = "./account/login.html";
                 showWarning("Phiên làm việc hết hạn. Vui lòng đăng nhập lại.");
             }
             throw new Error("Unauthorized");
