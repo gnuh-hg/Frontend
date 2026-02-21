@@ -45,7 +45,6 @@ document.addEventListener('DOMContentLoaded', function() {
     async function loadData() {
         try {
             if (Config.TEST) {
-                // TEST mode: không gọi backend, chỉ hiển thị empty state
                 mainListWrapper.innerHTML = '';
                 updateEmptyState();
                 return;
@@ -85,7 +84,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let saveTimeout = null;
     async function saveAllStructure() {
-        // TEST mode: không lưu gì cả
         if (Config.TEST) return;
 
         if (isSaving) return;
@@ -204,7 +202,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 item.querySelector('.icon-expanded').style.display = isExpanded ? 'block' : 'none';
                 item.querySelector('.icon-collapsed').style.display = isExpanded ? 'none' : 'block';
                 
-                // TEST mode: không gọi backend, chỉ cập nhật UI
                 if (Config.TEST) return;
 
                 try {
@@ -233,6 +230,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 const projectId = this.getAttribute('data-id');
                 const name = this.querySelector('p').innerText;
                 
+                // Đóng sidebar trên mobile khi chọn project
+                closeSidebarMobile();
+
                 const event = new CustomEvent('projectSelected', {
                     detail: { id: projectId, name: name},
                     bubbles: true
@@ -249,7 +249,7 @@ document.addEventListener('DOMContentLoaded', function() {
         fallbackOnBody: true,
         swapThreshold: 0.65, 
         ghostClass: 'sortable-ghost',
-        onEnd: saveAllStructure, // Đã tự xử lý TEST mode bên trong
+        onEnd: saveAllStructure,
         
         onMove: function(evt) {
             const draggedItem = evt.dragged;
@@ -343,7 +343,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         try {
             if (Config.TEST) {
-                // TEST mode: tạo item giả, không gọi backend
                 cnt++;
                 const fakeItem = { ...newItem, id: `test-${cnt}` };
                 renderItem(fakeItem, mainListWrapper);
@@ -398,7 +397,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         try {
             if (Config.TEST) {
-                // TEST mode: cập nhật UI trực tiếp, không gọi backend
                 currentSelectedItem.querySelector('p').innerText = newName;
                 const iconPath = currentSelectedItem.querySelector('.folder-icon path') || currentSelectedItem.querySelector('.project-icon circle');
                 if (iconPath) iconPath.setAttribute('fill', newColor);
@@ -438,7 +436,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         try {
             if (Config.TEST) {
-                // TEST mode: xóa khỏi DOM trực tiếp, không gọi backend
                 currentSelectedItem.remove();
                 updateEmptyState();
                 closeModals();
@@ -600,6 +597,53 @@ document.addEventListener('DOMContentLoaded', function() {
             mainListWrapper.insertAdjacentHTML('beforeend', emptyStateHTML);
         }
     }
+
+    // =========================================================
+    // --- 6. MOBILE SIDEBAR TOGGLE ---
+    // =========================================================
+
+    const sidebarNav       = document.querySelector('.sidebar-nav');
+    const sidebarOverlay   = document.getElementById('sidebarOverlay');
+    const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
+    const sidebarCloseBtn  = document.getElementById('sidebarCloseBtn');
+
+    function openSidebarMobile() {
+        sidebarNav?.classList.add('mobile-open');
+        sidebarOverlay?.classList.add('active');
+        sidebarToggleBtn?.classList.add('sidebar-open');
+        sidebarToggleBtn.style.display = 'none';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeSidebarMobile() {
+        sidebarNav?.classList.remove('mobile-open');
+        sidebarOverlay?.classList.remove('active');
+        sidebarToggleBtn?.classList.remove('sidebar-open');
+        if (window.innerWidth <= 768) sidebarToggleBtn.style.display = 'flex';
+        document.body.style.overflow = '';
+    }
+
+    // Nút toggle
+    sidebarToggleBtn?.addEventListener('click', () => {
+        if (sidebarNav?.classList.contains('mobile-open')) {
+            closeSidebarMobile();
+        } else {
+            openSidebarMobile();
+        }
+    });
+
+    // Bấm vào overlay để đóng sidebar
+    sidebarOverlay?.addEventListener('click', closeSidebarMobile);
+
+    // Nút đóng (X) trong footer sidebar
+    sidebarCloseBtn?.addEventListener('click', closeSidebarMobile);
+
+    // Reset khi resize lên desktop
+    window.addEventListener('resize', () => {
+        if (window.innerWidth > 768) {
+            closeSidebarMobile();
+        }
+    });
 
     loadData();
 });

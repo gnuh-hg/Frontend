@@ -13,9 +13,11 @@
         <script type="module" src="./main_screen/app_header/app_header.js" defer></script>
 
         <link rel="stylesheet" href="./main_screen/sidebar_nav/sidebar_nav.css" />
+        <link rel="stylesheet" href="./main_screen/sidebar_nav/mobile-sidebar.css" />
         <script type="module" src="./main_screen/sidebar_nav/sidebar_nav.js" defer></script>
 
         <link rel="stylesheet" href="./main_screen/container_task/container_task.css" />
+        <link rel="stylesheet" href="./main_screen/container_task/mobile-task.css" />
         <script type="module" src="./main_screen/container_task/container_task.js" defer></script>
 
         <link rel="stylesheet" href="./main_screen/pomodoro/pomodoro.css">
@@ -146,33 +148,57 @@
                 Logout
             </button>
         </div>
+
         <div class="container">
+            <!-- Overlay khi sidebar mở trên mobile -->
+            <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+            <!-- Nút toggle sidebar - chỉ hiện trên mobile -->
+            <button class="sidebar-toggle-btn" id="sidebarToggleBtn" aria-label="Toggle sidebar">
+                <svg class="icon-menu" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                     fill="none" stroke="currentColor" stroke-width="2.5"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="3" y1="6"  x2="21" y2="6"/>
+                    <line x1="3" y1="12" x2="21" y2="12"/>
+                    <line x1="3" y1="18" x2="21" y2="18"/>
+                </svg>
+            </button>
+
             <div class="sidebar-nav">
                 <div class="folder-container"><ul class="list-wrapper"></ul></div>
                 <div class="sidebar-actions">
                     <button class="add-button">
-                    <div class="icon-plus">
-                        <svg viewBox="0 0 100 100">
-                            <rect x="44" y="10" width="12" height="80" />
-                            <rect x="10" y="44" width="80" height="12" />
+                        <div class="icon-plus">
+                            <svg viewBox="0 0 100 100">
+                                <rect x="44" y="10" width="12" height="80" />
+                                <rect x="10" y="44" width="80" height="12" />
+                            </svg>
+                        </div>
+                        <p>Add folder</p>
+                        <div class="icon-folder-plus">
+                            <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+                                <defs>
+                                  <mask id="folder-mask">
+                                    <rect width="100%" height="100%" fill="white"/>
+                                    <circle cx="46" cy="47" r="9" fill="black"/>
+                                  </mask>
+                                </defs>
+                                <path d="M8 20 H22 L26 16 H44 Q50 16 50 22 V40 Q50 48 42 48 H16 Q8 48 8 40 Z"/>
+                                <g stroke-width="4" stroke-linecap="round">
+                                  <line x1="46" y1="42" x2="46" y2="52"/>
+                                  <line x1="41" y1="47" x2="51" y2="47"/>
+                                </g>
+                            </svg>
+                        </div>
+                    </button>
+
+                    <!-- Nút đóng sidebar - chỉ hiện trên mobile, nằm cạnh add-button -->
+                    <button class="sidebar-close-btn" id="sidebarCloseBtn" aria-label="Close sidebar">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6"  x2="6"  y2="18"/>
+                            <line x1="6"  y1="6"  x2="18" y2="18"/>
                         </svg>
-                    </div>
-                    <p>Add folder</p>
-                    <div class="icon-folder-plus">
-                        <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-                            <defs>
-                              <mask id="folder-mask">
-                                <rect width="100%" height="100%" fill="white"/>
-                                <circle cx="46" cy="47" r="9" fill="black"/>
-                              </mask>
-                            </defs>
-                            <path d=" M8 20 H22 L26 16 H44 Q50 16 50 22 V40 Q50 48 42 48 H16 Q8 48 8 40 Z"/>
-                            <g stroke-width="4" stroke-linecap="round">
-                              <line x1="46" y1="42" x2="46" y2="52"/>
-                              <line x1="41" y1="47" x2="51" y2="47"/>
-                            </g>
-                        </svg>
-                    </div>
                     </button>
                 
                     <div class="modal-overlay">
@@ -269,6 +295,7 @@
               </h1>
               <div class="task-list"></div>
             </div>
+
             <div class="task-detail-panel">
                 <!-- Header -->
                 <div class="task-detail-header">
@@ -306,80 +333,79 @@
                         </div>
                     </div>
                 
-                <!-- Start Date -->
-                <div class="detail-section">
-                    <div class="detail-label">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                            <line x1="16" y1="2" x2="16" y2="6"></line>
-                            <line x1="8" y1="2" x2="8" y2="6"></line>
-                            <line x1="3" y1="10" x2="21" y2="10"></line>
-                        </svg>
-                        <span>Start date</span>
-                    </div>
-                    <div class="detail-value">
-                        <button class="date-picker-btn" id="startDateBtn">
-                            <span class="date-btn-text placeholder" id="startDateText">Set date</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- End Date -->
-                <div class="detail-section">
-                    <div class="detail-label">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                            <line x1="16" y1="2" x2="16" y2="6"></line>
-                            <line x1="8" y1="2" x2="8" y2="6"></line>
-                            <line x1="3" y1="10" x2="21" y2="10"></line>
-                        </svg>
-                        <span>Due date</span>
-                    </div>
-                    <div class="detail-value">
-                        <button class="date-picker-btn" id="dueDateBtn">
-                            <span class="date-btn-text placeholder" id="dueDateText">Set date</span>
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Time Spent -->
-                <div class="detail-section">
-                    <div class="detail-label">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <polyline points="12 6 12 12 16 14"></polyline>
-                        </svg>
-                        <span>Time spent</span>
-                    </div>
-                    <div class="detail-value">
-                        <div class="time-spent-display">
-                            <span class="time-value">0h 0m</span>
-                            <button class="btn-timer">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                                </svg>
+                    <!-- Start Date -->
+                    <div class="detail-section">
+                        <div class="detail-label">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                            </svg>
+                            <span>Start date</span>
+                        </div>
+                        <div class="detail-value">
+                            <button class="date-picker-btn" id="startDateBtn">
+                                <span class="date-btn-text placeholder" id="startDateText">Set date</span>
                             </button>
                         </div>
                     </div>
-                </div>
-            
-                <!-- Notes -->
-                <div class="detail-section detail-section-notes">
-                    <div class="detail-label">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                            <polyline points="14 2 14 8 20 8"></polyline>
-                            <line x1="16" y1="13" x2="8" y2="13"></line>
-                            <line x1="16" y1="17" x2="8" y2="17"></line>
-                            <polyline points="10 9 9 9 8 9"></polyline>
-                        </svg>
-                        <span>Notes</span>
-                    </div>
-                    <div class="detail-value">
-                        <textarea class="notes-textarea" placeholder="Add notes..."></textarea>
-                    </div>
-                </div>
 
+                    <!-- End Date -->
+                    <div class="detail-section">
+                        <div class="detail-label">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                            </svg>
+                            <span>Due date</span>
+                        </div>
+                        <div class="detail-value">
+                            <button class="date-picker-btn" id="dueDateBtn">
+                                <span class="date-btn-text placeholder" id="dueDateText">Set date</span>
+                            </button>
+                        </div>
+                    </div>
+                
+                    <!-- Time Spent -->
+                    <div class="detail-section">
+                        <div class="detail-label">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                            <span>Time spent</span>
+                        </div>
+                        <div class="detail-value">
+                            <div class="time-spent-display">
+                                <span class="time-value">0h 0m</span>
+                                <button class="btn-timer">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+            
+                    <!-- Notes -->
+                    <div class="detail-section detail-section-notes">
+                        <div class="detail-label">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                <polyline points="10 9 9 9 8 9"></polyline>
+                            </svg>
+                            <span>Notes</span>
+                        </div>
+                        <div class="detail-value">
+                            <textarea class="notes-textarea" placeholder="Add notes..."></textarea>
+                        </div>
+                    </div>
                 </div>
             
                 <!-- Footer Actions -->
@@ -394,6 +420,7 @@
                 </div>
             </div>
         </div>
+
         <!-- Calendar Overlay for Task Detail -->
         <div class="calendar-overlay" id="taskCalendarOverlay">
             <div class="calendar-popup" id="taskCalendarPopup">
