@@ -1,4 +1,6 @@
-document.addEventListener('DOMContentLoaded', function () {
+import * as Config from '../configuration.js';
+
+document.addEventListener('DOMContentLoaded', async function () {
     // --- 1. DOM ELEMENTS ---
     const overlay          = document.getElementById('taskOverlay');
     const taskModal        = document.getElementById('taskModal');
@@ -13,32 +15,50 @@ document.addEventListener('DOMContentLoaded', function () {
     const startIcon        = document.getElementById('startIcon');
     const startLabel       = document.getElementById('startLabel');
 
-    // --- 2. TASK DATA ---
-    const tasks = [
-        { id_task: 1, name_task: 'Design dashboard UI' },
-        { id_task: 2, name_task: 'Review backend API code' },
-        { id_task: 3, name_task: 'Write documentation' },
-        { id_task: 4, name_task: 'Fix bug in login module' },
-        { id_task: 5, name_task: 'Meeting planning sprint Q2' }
-    ];
+    // --- 2. AUTH HELPER ---
+    let isRedirecting = false;
 
+    async function fetchWithAuth(url, options = {}) {
+        const token = localStorage.getItem('access_token');
+        const defaultHeaders = {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        };
+
+        const response = await fetch(url, {
+            ...options,
+            headers: { ...defaultHeaders, ...options.headers }
+        });
+
+        if (response.status === 401) {
+            if (!isRedirecting && !Config.TEST) {
+                isRedirecting = true;
+                window.location.href = "./account/login.html";
+                showWarning("Phiên làm việc hết hạn. Vui lòng đăng nhập lại.");
+            }
+            throw new Error("Unauthorized");
+        }
+
+        return response;
+    }
+
+    // --- 3. TASK DATA ---
+    let tasks        = [];
     let selectedTask = null;
 
-    // --- 3. TASK MODAL MANAGEMENT ---
+    // --- 4. TASK MODAL MANAGEMENT ---
 
     function getSearchKeyword() {
         return taskSearchInput ? taskSearchInput.value.trim().toLowerCase() : '';
     }
 
     function onTaskSearch() {
-        const keyword = getSearchKeyword();
-        renderTaskList(keyword);
+        renderTaskList(getSearchKeyword());
     }
 
     function renderTaskList(keyword = '') {
         taskModalList.innerHTML = '';
 
-        // None option — only shown when there is no keyword
         if (!keyword) {
             const noneItem = document.createElement('div');
             noneItem.className = 'task-item task-item-none' + (selectedTask === null ? ' selected' : '');
@@ -48,7 +68,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         const filtered = keyword
-            ? tasks.filter(t => t.name_task.toLowerCase().includes(keyword))
+            ? tasks.filter(t => t.name.toLowerCase().includes(keyword))
             : tasks;
 
         if (filtered.length === 0) {
@@ -57,15 +77,15 @@ document.addEventListener('DOMContentLoaded', function () {
             empty.style.color = 'var(--text-tertiary)';
             empty.style.justifyContent = 'center';
             empty.style.pointerEvents = 'none';
-            empty.textContent = 'No tasks found';
+            empty.textContent = keyword ? 'No tasks found' : 'No tasks available';
             taskModalList.appendChild(empty);
             return;
         }
 
         filtered.forEach(t => {
             const item = document.createElement('div');
-            item.className = 'task-item' + (selectedTask && selectedTask.id_task === t.id_task ? ' selected' : '');
-            item.innerHTML = `<span class="task-item-dot"></span> ${t.name_task}`;
+            item.className = 'task-item' + (selectedTask && selectedTask.id === t.id ? ' selected' : '');
+            item.innerHTML = `<span class="task-item-dot"></span> ${t.name}`;
             item.addEventListener('click', () => selectTask(t));
             taskModalList.appendChild(item);
         });
@@ -73,7 +93,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function selectTask(task) {
         selectedTask = task;
-        taskTriggerLabel.textContent = task ? task.name_task : '— Select active task —';
+        taskTriggerLabel.textContent = task ? task.name : '— Select active task —';
         taskTriggerLabel.style.color = task ? 'var(--text-primary)' : '';
         closeTaskModal();
     }
@@ -97,7 +117,7 @@ document.addEventListener('DOMContentLoaded', function () {
         setTimeout(() => { taskModal.style.display = 'none'; }, 150);
     }
 
-    // --- 4. TIMER STATE ---
+    // --- 5. TIMER STATE ---
     let interval           = null;
     let running            = false;
     let currentMode        = 'focus'; // 'focus' | 'short' | 'long'
@@ -107,7 +127,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const CIRCUMFERENCE = 2 * Math.PI * 100; // ~628
 
-    // --- 5. SETTINGS MANAGEMENT ---
+    // --- 6. SETTINGS MANAGEMENT ---
 
     function getSettings() {
         return {
@@ -121,6 +141,17 @@ document.addEventListener('DOMContentLoaded', function () {
         };
     }
 
+    function applySettingsToUI(data) {
+        // API trả về giây, UI dùng phút
+        document.getElementById('focusDur').value  = Math.round(data.focus_duration / 60);
+        document.getElementById('shortDur').value  = Math.round(data.short_break    / 60);
+        document.getElementById('longDur').value   = Math.round(data.long_break     / 60);
+        document.getElementById('longAfter').value = data.long_break_after;
+        document.getElementById('disableBreak').checked = data.disable_break;
+        document.getElementById('autoFocus').checked    = data.auto_start_focus;
+        document.getElementById('autoBreak').checked    = data.auto_start_break;
+    }
+
     function getDuration(mode) {
         const s = getSettings();
         if (mode === 'focus') return s.focusDur * 60;
@@ -128,11 +159,42 @@ document.addEventListener('DOMContentLoaded', function () {
         if (mode === 'long')  return s.longDur  * 60;
     }
 
+    // Debounce PATCH settings — tránh gọi API liên tục khi người dùng bấm +/-
+    let settingsPatchTimer = null;
+    function schedulePatchSettings() {
+        clearTimeout(settingsPatchTimer);
+        settingsPatchTimer = setTimeout(() => patchSettings(), 800);
+    }
+
+    async function patchSettings() {
+        if (Config.TEST) return;
+        const s = getSettings();
+        const body = {
+            focus_duration:   s.focusDur  * 60,
+            short_break:      s.shortDur  * 60,
+            long_break:       s.longDur   * 60,
+            long_break_after: s.longAfter,
+            disable_break:    s.disableBreak,
+            auto_start_focus: s.autoFocus,
+            auto_start_break: s.autoBreak,
+        };
+        try {
+            const res = await fetchWithAuth(`${Config.URL_API}/pomodoro/settings`, {
+                method: 'PATCH',
+                body: JSON.stringify(body),
+            });
+            if (!res.ok) console.warn('PATCH settings failed:', res.status);
+        } catch (err) {
+            if (err.message !== 'Unauthorized') console.error('PATCH settings error:', err);
+        }
+    }
+
     function onSettingChange() {
         if (running) return;
         totalSeconds     = getDuration(currentMode);
         remainingSeconds = totalSeconds;
         updateDisplay();
+        schedulePatchSettings();
     }
 
     function changeVal(id, delta) {
@@ -145,7 +207,64 @@ document.addEventListener('DOMContentLoaded', function () {
         onSettingChange();
     }
 
-    // --- 6. UI RENDERING & DISPLAY LOGIC ---
+    // --- 7. API: LOAD ON STARTUP ---
+
+    async function loadSettings() {
+        if (Config.TEST) return;
+        try {
+            const res  = await fetchWithAuth(`${Config.URL_API}/pomodoro/settings`);
+            if (!res.ok) return;
+            const data = await res.json();
+            applySettingsToUI(data);
+        } catch (err) {
+            if (err.message !== 'Unauthorized') console.error('loadSettings error:', err);
+        }
+    }
+
+    async function loadTasks() {
+        if (Config.TEST) {
+            tasks = [
+                { id: 1, name: 'Design dashboard UI' },
+                { id: 2, name: 'Review backend API code' },
+                { id: 3, name: 'Write documentation' },
+                { id: 4, name: 'Fix bug in login module' },
+                { id: 5, name: 'Meeting planning sprint Q2' },
+            ];
+            return;
+        }
+        try {
+            const res  = await fetchWithAuth(`${Config.URL_API}/pomodoro/tasks`);
+            if (!res.ok) return;
+            tasks = await res.json(); // [{ id, name }, ...]
+        } catch (err) {
+            if (err.message !== 'Unauthorized') console.error('loadTasks error:', err);
+        }
+    }
+
+    // --- 8. API: POST SESSION ---
+
+    async function postSession(mode, durationSeconds) {
+        if (Config.TEST) return;
+        // Map internal mode name → API mode string
+        const modeMap = { focus: 'focus', short: 'short_break', long: 'long_break' };
+        const body = {
+            mode:         modeMap[mode],
+            duration:     durationSeconds,
+            task_id:      selectedTask ? selectedTask.id : null,
+            completed_at: new Date().toISOString(),
+        };
+        try {
+            const res = await fetchWithAuth(`${Config.URL_API}/pomodoro/sessions`, {
+                method: 'POST',
+                body: JSON.stringify(body),
+            });
+            if (!res.ok) console.warn('POST session failed:', res.status);
+        } catch (err) {
+            if (err.message !== 'Unauthorized') console.error('POST session error:', err);
+        }
+    }
+
+    // --- 9. UI RENDERING & DISPLAY LOGIC ---
 
     function updateDisplay() {
         const m = Math.floor(remainingSeconds / 60);
@@ -154,7 +273,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const ratio = remainingSeconds / totalSeconds;
         timerProgress.style.strokeDashoffset = CIRCUMFERENCE * (1 - ratio);
-        timerProgress.className = 'timer-progress' + (currentMode !== 'focus' ? ' break' : '');
+        timerProgress.setAttribute('class', 'timer-progress' + (currentMode !== 'focus' ? ' break' : ''));
 
         renderSessionDots();
     }
@@ -181,7 +300,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // --- 7. TIMER CONTROLS ---
+    // --- 10. TIMER CONTROLS ---
 
     function setMode(mode, tabEl) {
         currentMode = mode;
@@ -224,10 +343,15 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    function onTimerEnd() {
-        const s = getSettings();
+    async function onTimerEnd() {
+        const s              = getSettings();
+        const finishedMode   = currentMode;
+        const finishedDuration = totalSeconds; // thời lượng đã đặt (giây)
 
-        if (currentMode === 'focus') {
+        // Ghi nhận phiên vào backend
+        await postSession(finishedMode, finishedDuration);
+
+        if (finishedMode === 'focus') {
             completedPomodoros++;
             updateDisplay();
 
@@ -279,15 +403,13 @@ document.addEventListener('DOMContentLoaded', function () {
         }, 300);
     }
 
-    // --- 8. UI EVENT BINDINGS ---
+    // --- 11. UI EVENT BINDINGS ---
 
     document.getElementById('taskTrigger').addEventListener('click', openTaskModal);
     overlay.addEventListener('click', closeTaskModal);
     taskSearchInput?.addEventListener('input', onTaskSearch);
 
     startBtn.addEventListener('click', toggleTimer);
-
-    // Mode tabs: display only, manual switching not allowed
 
     document.querySelectorAll('.num-btn').forEach(btn => {
         const target = btn.getAttribute('data-target');
@@ -306,21 +428,23 @@ document.addEventListener('DOMContentLoaded', function () {
 
     document.querySelector('[title="Reset"]')?.addEventListener('click', resetTimer);
     document.querySelector('[title="Skip"]')?.addEventListener('click', skipTimer);
-
     document.querySelector('.close-btn')?.addEventListener('click', closePomodoro);
 
-    // --- 9. GLOBAL EXPOSE (for compatibility if HTML uses inline onclick) ---
-    window.setMode        = setMode;
-    window.toggleTimer    = toggleTimer;
-    window.resetTimer     = resetTimer;
-    window.skipTimer      = skipTimer;
-    window.changeVal      = changeVal;
-    window.openTaskModal  = openTaskModal;
-    window.closeTaskModal = closeTaskModal;
-    window.onTaskSearch   = onTaskSearch;
+    // --- 12. GLOBAL EXPOSE ---
+    window.setMode         = setMode;
+    window.toggleTimer     = toggleTimer;
+    window.resetTimer      = resetTimer;
+    window.skipTimer       = skipTimer;
+    window.changeVal       = changeVal;
+    window.openTaskModal   = openTaskModal;
+    window.closeTaskModal  = closeTaskModal;
+    window.onTaskSearch    = onTaskSearch;
     window.onSettingChange = onSettingChange;
-    window.closePomodoro  = closePomodoro;
+    window.closePomodoro   = closePomodoro;
 
-    // --- 10. INITIALIZATION ---
+    // --- 13. INITIALIZATION ---
+    await Promise.all([loadSettings(), loadTasks()]);
+    totalSeconds     = getDuration(currentMode);
+    remainingSeconds = totalSeconds;
     updateDisplay();
 });

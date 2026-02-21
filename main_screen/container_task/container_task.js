@@ -278,7 +278,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 due_date_btn.classList.remove('has-date');
                 taskDatePicker.dueDate = null;
             }
-            time_spent.innerHTML = `${data.time_spent} h`;
+
+            time_spent.innerHTML = `${(data.time_spent / 3600).toFixed(2) } h`;
             notes.innerHTML = data.notes;
         
             panel.classList.add('active');
@@ -572,9 +573,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const dd = String(day).padStart(2, '0');
             const mm = String(month + 1).padStart(2, '0');
             const formatted = `${dd}/${mm}/${year}`;
-
+        
             if (this.activeTarget === 'start') {
                 this.startDate = date;
+                activeData.start_date = date.toISOString(); // ← sync data
                 const btn = document.getElementById('startDateBtn');
                 const text = document.getElementById('startDateText');
                 text.textContent = formatted;
@@ -582,6 +584,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 btn.classList.add('has-date');
             } else {
                 this.dueDate = date;
+                activeData.due_date = date.toISOString(); // ← sync data
                 const btn = document.getElementById('dueDateBtn');
                 const text = document.getElementById('dueDateText');
                 const item = document.querySelector(`.task[data-id="${activeData.id}"]`);
@@ -590,7 +593,36 @@ document.addEventListener('DOMContentLoaded', function() {
                 text.classList.remove('placeholder');
                 btn.classList.add('has-date');
             }
-
+        
+            // Tính lại progress sau khi đổi ngày
+            const start = this.startDate;
+            const due = this.dueDate;
+            const now = new Date();
+            let progress = 0;
+        
+            if (start && due) {
+                if (now < start) progress = 0;
+                else if (now > due) progress = 100;
+                else progress = Math.round(((now - start) / (due - start)) * 100);
+            }
+        
+            // Cập nhật progress trên task card
+            if (activeItem) {
+                const fill = activeItem.querySelector('.progress-bar-fill');
+                const percent = activeItem.querySelector('.progress-percent');
+                if (fill) fill.style.width = `${progress}%`;
+                if (percent) percent.textContent = `${progress}%`;
+            }
+        
+            // Cập nhật progress trên panel detail
+            const panel = document.querySelector('.task-detail-panel');
+            if (panel) {
+                const fill = panel.querySelector('.progress-bar-fill');
+                const percent = panel.querySelector('.progress-percent');
+                if (fill) fill.style.width = `${progress}%`;
+                if (percent) percent.textContent = `${progress}%`;
+            }
+        
             this.closeCalendar();
         }
 
