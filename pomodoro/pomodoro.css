@@ -591,4 +591,9 @@ body {
         background: var(--border-light);
         opacity: 0.5;
     }
+
+    .timer-panel *,
+    .settings-panel * {
+        max-height: none;
+    }
 }
