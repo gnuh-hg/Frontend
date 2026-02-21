@@ -742,6 +742,9 @@ document.addEventListener('DOMContentLoaded', function() {
         animation: 150,
         ghostClass: 'sortable-ghost',
         filter: '.empty-state',
+        delay: 300,
+        delayOnTouchOnly: true,
+        touchStartThreshold: 5,
         onEnd: function() { sendReorder(); }
     });
 

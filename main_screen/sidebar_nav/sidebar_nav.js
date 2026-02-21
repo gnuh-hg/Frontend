@@ -224,6 +224,9 @@ document.addEventListener('DOMContentLoaded', function() {
         swapThreshold: 0.65, 
         ghostClass: 'sortable-ghost',
         onEnd: saveAllStructure,
+        delay: 300,
+        delayOnTouchOnly: true,
+        touchStartThreshold: 5,
         
         onMove: function(evt) {
             const draggedItem = evt.dragged;
