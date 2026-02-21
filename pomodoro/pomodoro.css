@@ -515,63 +515,69 @@ body {
 /* ===== MOBILE RESPONSIVE: Stack + Scroll Snap ===== */
 @media (max-width: 640px) {
 
-    /* Body becomes the scroll container */
     body {
-        align-items: flex-start;
-        overflow-y: scroll;
-        overflow-x: hidden;
-        scroll-snap-type: y mandatory;
-        height: 100vh;
+        overflow: hidden;
+        height: 100dvh;
     }
 
     .pomo-wrapper {
         flex-direction: column;
-        gap: 12px;
-        padding: 16px;
+        gap: 12px;          /* khoảng cách giữa 2 card */
+        padding: 10px;      /* margin 4 cạnh với màn hình */
         max-width: 100%;
         width: 100%;
-        min-height: calc(200vh + 12px);
+        height: 100dvh;
+        min-height: unset;
         align-items: stretch;
         animation: none;
+        overflow-y: scroll;
+        overflow-x: hidden;
+        scroll-snap-type: y mandatory;
+        -webkit-overflow-scrolling: touch;
+        box-sizing: border-box;
+        scroll-padding-top: 10px;
     }
 
-    /* Timer panel = screen 1 — giữ card nổi */
+    /* Mỗi card cao = 100dvh trừ padding trên dưới (10+10) và nửa gap */
     .timer-panel {
         width: 100%;
-        /* chiếm đúng 1 màn hình trừ padding trên dưới */
-        height: calc(100vh - 32px);
-        min-height: calc(100vh - 32px);
+        height: calc(100dvh - 20px); /* trừ padding top+bottom của wrapper */
+        min-height: calc(100dvh - 20px);
+        flex-shrink: 0;
         scroll-snap-align: start;
         scroll-snap-stop: always;
         justify-content: center;
         gap: 22px;
-        /* giữ border-radius và border của card */
+        position: relative;
+        box-sizing: border-box;
+        border-radius: 16px;  /* card nổi có bo góc */
     }
 
-    /* Settings panel = screen 2 — giữ card nổi */
     .settings-panel {
         width: 100%;
-        min-height: calc(100vh - 32px);
+        height: calc(100dvh - 20px);
+        min-height: calc(100dvh - 20px);
+        flex-shrink: 0;
         scroll-snap-align: start;
         scroll-snap-stop: always;
         overflow-y: auto;
+        box-sizing: border-box;
+        border-radius: 16px;  /* card nổi có bo góc */
     }
 
-    /* Slightly smaller circle on mobile */
     .timer-circle-wrap {
         width: 190px;
         height: 190px;
     }
+
     .timer-display {
         font-size: 44px;
     }
 
-    /* Full-width mode tabs */
     .mode-tabs {
         width: 100%;
     }
 
-    /* Scroll hint dot at bottom of timer panel */
     .timer-panel::after {
         content: '';
         display: block;
@@ -584,8 +590,5 @@ body {
         border-radius: 2px;
         background: var(--border-light);
         opacity: 0.5;
-    }
-    .timer-panel {
-        position: relative;
     }
 }
