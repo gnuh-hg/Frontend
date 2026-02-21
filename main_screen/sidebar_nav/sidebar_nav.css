@@ -821,12 +821,6 @@ svg.action-more circle {
    RESPONSIVE ≤ 768px
    ========================================================================== */
 @media (max-width: 768px) {
-    .folder-container {
-        flex: 1;
-        overflow-y: auto;
-        min-height: 0; /* quan trọng - cho phép flex item co lại */
-    }
-
 
     /* Hiện nút hamburger */
     .sidebar-toggle-btn {
@@ -851,7 +845,6 @@ svg.action-more circle {
         height: calc(98vh - 60px);
         background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
         border-radius: 8px;
-        overflow: hidden;
     }
 
     .sidebar-nav.mobile-open {
