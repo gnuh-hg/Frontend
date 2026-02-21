@@ -15,38 +15,11 @@ document.addEventListener('DOMContentLoaded', async function () {
     const startIcon        = document.getElementById('startIcon');
     const startLabel       = document.getElementById('startLabel');
 
-    // --- 2. AUTH HELPER ---
-    let isRedirecting = false;
-
-    async function fetchWithAuth(url, options = {}) {
-        const token = localStorage.getItem('access_token');
-        const defaultHeaders = {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-        };
-
-        const response = await fetch(url, {
-            ...options,
-            headers: { ...defaultHeaders, ...options.headers }
-        });
-
-        if (response.status === 401) {
-            if (!isRedirecting && !Config.TEST) {
-                isRedirecting = true;
-                window.location.href = "./account/login.html";
-                showWarning("Phiên làm việc hết hạn. Vui lòng đăng nhập lại.");
-            }
-            throw new Error("Unauthorized");
-        }
-
-        return response;
-    }
-
-    // --- 3. TASK DATA ---
+    // --- 2. TASK DATA ---
     let tasks        = [];
     let selectedTask = null;
 
-    // --- 4. TASK MODAL MANAGEMENT ---
+    // --- 3. TASK MODAL MANAGEMENT ---
 
     function getSearchKeyword() {
         return taskSearchInput ? taskSearchInput.value.trim().toLowerCase() : '';
@@ -179,13 +152,13 @@ document.addEventListener('DOMContentLoaded', async function () {
             auto_start_break: s.autoBreak,
         };
         try {
-            const res = await fetchWithAuth(`${Config.URL_API}/pomodoro/settings`, {
+            const res = await Config.fetchWithAuth(`${Config.URL_API}/pomodoro/settings`, {
                 method: 'PATCH',
                 body: JSON.stringify(body),
             });
-            if (!res.ok) showWarning('PATCH settings failed:', res.status);
+            if (!res.ok) Config.showWarning('PATCH settings failed:', res.status);
         } catch (err) {
-            if (err.message !== 'Unauthorized') showWarning('PATCH settings error:', err);
+            if (err.message !== 'Unauthorized') Config.showWarning('PATCH settings error:', err);
         }
     }
     
@@ -212,12 +185,12 @@ document.addEventListener('DOMContentLoaded', async function () {
     async function loadSettings() {
         if (Config.TEST) return;
         try {
-            const res  = await fetchWithAuth(`${Config.URL_API}/pomodoro/settings`);
+            const res  = await Config.fetchWithAuth(`${Config.URL_API}/pomodoro/settings`);
             if (!res.ok) return;
             const data = await res.json();
             applySettingsToUI(data);
         } catch (err) {
-            if (err.message !== 'Unauthorized') showWarning('loadSettings error:', err);
+            if (err.message !== 'Unauthorized') Config.showWarning('loadSettings error:', err);
         }
     }
 
@@ -233,11 +206,11 @@ document.addEventListener('DOMContentLoaded', async function () {
             return;
         }
         try {
-            const res  = await fetchWithAuth(`${Config.URL_API}/pomodoro/tasks`);
+            const res  = await Config.fetchWithAuth(`${Config.URL_API}/pomodoro/tasks`);
             if (!res.ok) return;
             tasks = await res.json(); // [{ id, name }, ...]
         } catch (err) {
-            if (err.message !== 'Unauthorized') showWarning('loadTasks error:', err);
+            if (err.message !== 'Unauthorized') Config.showWarning('loadTasks error:', err);
         }
     }
 
@@ -254,13 +227,13 @@ document.addEventListener('DOMContentLoaded', async function () {
             completed_at: new Date().toISOString(),
         };
         try {
-            const res = await fetchWithAuth(`${Config.URL_API}/pomodoro/sessions`, {
+            const res = await Config.fetchWithAuth(`${Config.URL_API}/pomodoro/sessions`, {
                 method: 'POST',
                 body: JSON.stringify(body),
             });
-            if (!res.ok) showWarning('POST session failed:', res.status);
+            if (!res.ok) Config.showWarning('POST session failed:', res.status);
         } catch (err) {
-            if (err.message !== 'Unauthorized') showWarning('POST session error:', err);
+            if (err.message !== 'Unauthorized') Config.showWarning('POST session error:', err);
         }
     }
 
@@ -401,36 +374,6 @@ document.addEventListener('DOMContentLoaded', async function () {
         setTimeout(() => {
             window.location.href = '../index.html';
         }, 300);
-    }
-
-    let lastWarningTime = 0;
-    function showWarning(...args) {
-        const warning_context = args.map(arg => 
-            typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
-        ).join(' ');
-
-        const currentTime = Date.now();
-        if (currentTime - lastWarningTime < 3000) return;
-        lastWarningTime = currentTime;
-
-        const existingWarning = document.querySelector('.warning');
-        if (existingWarning) existingWarning.remove();
-
-        const warning = document.createElement('div');
-        warning.className = 'warning';
-        warning.textContent = warning_context;
-        warning.style.cssText = `
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-            background: #ef4444; color: white; padding: 12px 24px;
-            border-radius: 8px; font-size: 14px; font-weight: 500;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 10000;
-            animation: slideDown 0.3s ease-out;
-        `;
-        document.body.appendChild(warning);
-        setTimeout(() => {
-            warning.style.animation = 'slideUp 0.3s ease-out';
-            setTimeout(() => warning.remove(), 300);
-        }, 3000);
     }
 
     // --- 11. UI EVENT BINDINGS ---

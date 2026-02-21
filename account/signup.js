@@ -216,7 +216,7 @@ document.addEventListener('DOMContentLoaded', function() {
         };
 
         try {
-            const response = await fetch(`${Config.URL_API}/signup`, {
+            const response = await Config.fetchWithRetry(`${Config.URL_API}/signup`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

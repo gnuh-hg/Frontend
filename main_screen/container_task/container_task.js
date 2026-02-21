@@ -4,7 +4,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const container = document.querySelector('.container-task');
     let projectId = null;
     let nameProject = null;
-    let isRedirecting = false;
     let activeItem = null;
     let activeData = null;
 
@@ -25,35 +24,11 @@ document.addEventListener('DOMContentLoaded', function() {
         loadData();
     });
 
-    async function fetchWithAuth(url, options = {}) {
-        const token = localStorage.getItem('access_token');
-        const defaultHeaders = {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-        };
-
-        const response = await fetch(url, {
-            ...options,
-            headers: { ...defaultHeaders, ...options.headers }
-        });
-
-        if (response.status === 401) {
-            if (!isRedirecting && !Config.TEST) {
-                isRedirecting = true;
-                window.location.href = "./account/login.html";
-                showWarning("Phiên làm việc hết hạn. Vui lòng đăng nhập lại.");
-            }
-            throw new Error("Unauthorized");
-        }
-        
-        return response;
-    }
-
     async function loadData() {
         try {
-            const response = await fetchWithAuth(`${Config.URL_API}/project/${projectId}/items`);
+            const response = await Config.fetchWithAuth(`${Config.URL_API}/project/${projectId}/items`);
             if (!response.ok) {
-                showWarning("Không thể tải dữ liệu");
+                Config.showWarning("Không thể tải dữ liệu");
                 return;
             }
             document.querySelectorAll('.task').forEach(el => el.remove());
@@ -65,7 +40,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 items.forEach(item => renderItem(item));
             }
         } catch (err) {
-            showWarning("Lỗi khi load dữ liệu");
+            Config.showWarning("Lỗi khi load dữ liệu");
         }
     }
 
@@ -212,7 +187,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     return;
                 }
                 try {
-                    const response = await fetchWithAuth(
+                    const response = await Config.fetchWithAuth(
                         `${Config.URL_API}/project/${projectId}/items/${data.id}`, 
                         { method: 'DELETE' }
                     );
@@ -223,10 +198,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (container.querySelectorAll('.task').length === 0) 
                             showEmptyState('noTask');
                     } else {
-                        showWarning('Lỗi khi xóa task');
+                        Config.showWarning('Lỗi khi xóa task');
                     }
                 } catch (err) {
-                    showWarning('Lỗi khi xóa task');
+                    Config.showWarning('Lỗi khi xóa task');
                 }
             }, 400);
         });
@@ -289,7 +264,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let cnt = 0;
     container.querySelector('h1 button').addEventListener('click', async (e) => {
         if (!projectId && !Config.TEST) {
-            showWarning('Vui lòng chọn project trước!');
+            Config.showWarning('Vui lòng chọn project trước!');
             return;
         }
 
@@ -310,7 +285,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            const response = await fetchWithAuth(`${Config.URL_API}/project/${projectId}/items`, {
+            const response = await Config.fetchWithAuth(`${Config.URL_API}/project/${projectId}/items`, {
                 method: 'POST', body: JSON.stringify({})
             });
 
@@ -319,10 +294,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 renderItem(item);
             } else {
                 const errorData = await response.json();
-                showWarning(`Không thể tạo mục mới: ${errorData.detail || 'Lỗi không xác định'}`);
+                Config.showWarning(`Không thể tạo mục mới: ${errorData.detail || 'Lỗi không xác định'}`);
             }
         } catch (err) {
-            showWarning('Lỗi khi tạo task');
+            Config.showWarning('Lỗi khi tạo task');
         }
     });
 
@@ -371,7 +346,7 @@ document.addEventListener('DOMContentLoaded', function() {
             nameDebounceTimer = setTimeout(async () => {
                 if (Config.TEST) return;
                 try {
-                    await fetchWithAuth(
+                    await Config.fetchWithAuth(
                         `${Config.URL_API}/project/${projectId}/items/${activeData.id}`,
                         { method: 'PATCH', body: JSON.stringify({ name: newName }) }
                     );
@@ -404,16 +379,17 @@ document.addEventListener('DOMContentLoaded', function() {
             priorityBadge.classList.add(newPriority);
             item.classList.add(newPriority);
             priorityBadge.querySelector('span').textContent = newPriority.charAt(0).toUpperCase() + newPriority.slice(1);
+            activeData.priority = newPriority;
 
             if (Config.TEST) return;
 
             // Chỉ delay phần gửi backend
             clearTimeout(priorityDebounceTimer);
             priorityDebounceTimer = setTimeout(() => {
-                fetchWithAuth(`${Config.URL_API}/project/${projectId}/items/${activeData.id}`, {
+                Config.fetchWithAuth(`${Config.URL_API}/project/${projectId}/items/${activeData.id}`, {
                     method: 'PATCH',
                     body: JSON.stringify({ priority: newPriority })
-                }).catch(() => showWarning("Không thể đổi độ quan trọng"));
+                }).catch(() => Config.showWarning("Không thể đổi độ quan trọng"));
             }, 500);
         });
     }
@@ -694,10 +670,10 @@ document.addEventListener('DOMContentLoaded', function() {
             clearTimeout(notesDebounceTimer);
             notesDebounceTimer = setTimeout(() => {
                 if (Config.TEST) return;
-                fetchWithAuth(`${Config.URL_API}/project/${projectId}/items/${activeData.id}`, {
+                Config.fetchWithAuth(`${Config.URL_API}/project/${projectId}/items/${activeData.id}`, {
                     method: 'PATCH',
                     body: JSON.stringify({ notes: newNotes })
-                }).catch(() => showWarning("Không thể lưu ghi chú"));
+                }).catch(() => Config.showWarning("Không thể lưu ghi chú"));
             }, 500);
         });
     }
@@ -719,7 +695,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             try {
-                const response = await fetchWithAuth(
+                const response = await Config.fetchWithAuth(
                     `${Config.URL_API}/project/${projectId}/items/${activeData.id}`, 
                     { method: 'DELETE' }
                 );
@@ -729,9 +705,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (container.querySelectorAll('.task').length === 0) 
                         showEmptyState('noTask');
                     if (panel) panel.classList.remove('active');
-                } else showWarning('Lỗi khi xóa task');
+                } else Config.showWarning('Lỗi khi xóa task');
             } catch (err) {
-                showWarning('Lỗi khi xóa task');
+                Config.showWarning('Lỗi khi xóa task');
             }
         });
     }
@@ -749,7 +725,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 position: index + 1
             }));
         
-    fetchWithAuth(`${Config.URL_API}/project/${projectId}/items/reorder`, {
+    Config.fetchWithAuth(`${Config.URL_API}/project/${projectId}/items/reorder`, {
         method: 'PATCH',
         body: JSON.stringify(body)
     }).then(async res => {
@@ -757,7 +733,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const err = await res.json();
             console.error('[REORDER]', res.status, err);
         }
-    }).catch(() => showWarning("Không thể cập nhật vị trí"));
+    }).catch(() => Config.showWarning("Không thể cập nhật vị trí"));
         }, 500);
     }
     
@@ -768,32 +744,6 @@ document.addEventListener('DOMContentLoaded', function() {
         filter: '.empty-state',
         onEnd: function() { sendReorder(); }
     });
-
-    let lastWarningTime = 0;
-    function showWarning(warning_context) {
-        const currentTime = Date.now();
-        if (currentTime - lastWarningTime < 3000) return;
-        lastWarningTime = currentTime;
-
-        const existingWarning = document.querySelector('.warning');
-        if (existingWarning) existingWarning.remove();
-
-        const warning = document.createElement('div');
-        warning.className = 'warning';
-        warning.textContent = warning_context;
-        warning.style.cssText = `
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-            background: #ef4444; color: white; padding: 12px 24px;
-            border-radius: 8px; font-size: 14px; font-weight: 500;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 10000;
-            animation: slideDown 0.3s ease-out;
-        `;
-        document.body.appendChild(warning);
-        setTimeout(() => {
-            warning.style.animation = 'slideUp 0.3s ease-out';
-            setTimeout(() => warning.remove(), 300);
-        }, 3000);
-    }
 
     function showDate(_date) {
         const date = new Date(_date);

@@ -12,35 +12,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     let currentSelectedItem = null;
     let isSaving = false;
-    let isRedirecting = false;
     let cnt = 0; // ID giả cho TEST mode
 
-    // --- FETCHAUTH ---
-    async function fetchWithAuth(url, options = {}) {
-        const token = localStorage.getItem('access_token');
-        const defaultHeaders = {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-        };
-
-        const response = await fetch(url, {
-            ...options,
-            headers: { ...defaultHeaders, ...options.headers }
-        });
-
-        if (response.status === 401) {
-            if (!isRedirecting && !Config.TEST) {
-                isRedirecting = true;
-                window.location.href = "./account/login.html";
-                showWarning("Phiên làm việc hết hạn. Vui lòng đăng nhập lại.");
-            }
-            throw new Error("Unauthorized");
-        }
-        
-        return response;
-    }
-
-    // --- 2. QUẢN LÝ DỮ LIỆU (API CALLS) ---
+    // --- 1. QUẢN LÝ DỮ LIỆU (API CALLS) ---
 
     async function loadData() {
         try {
@@ -50,7 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            const response = await fetchWithAuth(`${Config.URL_API}/items`);
+            const response = await Config.fetchWithAuth(`${Config.URL_API}/items`);
             
             if (!response.ok) {
                 console.error("Không thể tải dữ liệu");
@@ -124,13 +98,13 @@ document.addEventListener('DOMContentLoaded', function() {
             traverse(mainListWrapper);
 
             try {
-                const response = await fetchWithAuth(`${Config.URL_API}/items/save-all`, { 
+                const response = await Config.fetchWithAuth(`${Config.URL_API}/items/save-all`, { 
                     method: 'POST',
                     body: JSON.stringify(items)
                 });
                 
                 if (!response.ok) {
-                    showWarning('Lỗi khi lưu cấu trúc');
+                    Config.showWarning('Lỗi khi lưu cấu trúc');
                     console.error("Lỗi khi lưu cấu trúc");
                 }
             } catch (err) { 
@@ -205,13 +179,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (Config.TEST) return;
 
                 try {
-                    const response = await fetchWithAuth(`${Config.URL_API}/items/${item.getAttribute('data-id')}`, {
+                    const response = await Config.fetchWithAuth(`${Config.URL_API}/items/${item.getAttribute('data-id')}`, {
                         method: 'PUT',
                         body: JSON.stringify({ expanded: isExpanded })
                     });
                     
                     if (!response.ok) {
-                        showWarning("Không thể cập nhật trạng thái folder");
+                        Config.showWarning("Không thể cập nhật trạng thái folder");
                         console.error("Không thể cập nhật trạng thái folder");
                     }
                 } catch (err) {
@@ -265,7 +239,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const totalDepth = targetDepth + 1 + maxChildDepth;
 
             if (totalDepth > 5) {
-                showWarning('Maximum nesting depth is 5 levels');
+                Config.showWarning('Maximum nesting depth is 5 levels');
                 return false;
             }
 
@@ -328,7 +302,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (!name) {
             input.focus();
-            showWarning("Vui lòng nhập tên!");
+            Config.showWarning("Vui lòng nhập tên!");
             return;
         }
 
@@ -352,7 +326,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            const res = await fetchWithAuth(`${Config.URL_API}/items`, {
+            const res = await Config.fetchWithAuth(`${Config.URL_API}/items`, {
                 method: 'POST',
                 body: JSON.stringify(newItem)
             });
@@ -365,7 +339,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 closeModals();
             } else {
                 const errorData = await res.json();
-                showWarning(`Không thể tạo mục mới: ${errorData.detail || 'Lỗi không xác định'}`);
+                Config.showWarning(`Không thể tạo mục mới: ${errorData.detail || 'Lỗi không xác định'}`);
             }
         } catch (err) {
             console.error("Lỗi khi tạo item:", err);
@@ -391,7 +365,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (!newName) {
             modalMoreBox.querySelector('.modal-input').focus();
-            showWarning("Vui lòng nhập tên!");
+            Config.showWarning("Vui lòng nhập tên!");
             return;
         }
 
@@ -404,7 +378,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            const res = await fetchWithAuth(`${Config.URL_API}/items/${id}`, {
+            const res = await Config.fetchWithAuth(`${Config.URL_API}/items/${id}`, {
                 method: 'PUT',
                 body: JSON.stringify({ name: newName, color: newColor })
             });
@@ -415,7 +389,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (iconPath) iconPath.setAttribute('fill', newColor);
                 closeModals();
             } else {
-                showWarning("Không thể cập nhật");
+                Config.showWarning("Không thể cập nhật");
             }
         } catch (err) {
             console.error("Lỗi khi sửa item:", err);
@@ -442,7 +416,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            const res = await fetchWithAuth(`${Config.URL_API}/items/${id}`, { 
+            const res = await Config.fetchWithAuth(`${Config.URL_API}/items/${id}`, { 
                 method: 'DELETE' 
             });
             
@@ -452,7 +426,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 closeModals();
             } else {
                 const errorData = await res.json();
-                showWarning(errorData.detail || "Không thể xóa");
+                Config.showWarning(errorData.detail || "Không thể xóa");
             }
         } catch (err) {
             console.error("Lỗi khi xóa item:", err);
@@ -503,42 +477,6 @@ document.addEventListener('DOMContentLoaded', function() {
             this.classList.add('selected');
         });
     });
-
-    let lastWarningTime = 0;
-    function showWarning(warning_context) {
-        const currentTime = Date.now();
-        if (currentTime - lastWarningTime < 3000) return;
-        lastWarningTime = currentTime;
-
-        const existingWarning = document.querySelector('.warning');
-        if (existingWarning) existingWarning.remove();
-
-        const warning = document.createElement('div');
-        warning.className = 'warning';
-        warning.textContent = warning_context;
-        warning.style.cssText = `
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #ef4444;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            z-index: 10000;
-            animation: slideDown 0.3s ease-out;
-        `;
-
-        document.body.appendChild(warning);
-
-        setTimeout(() => {
-            warning.style.animation = 'slideUp 0.3s ease-out';
-            setTimeout(() => warning.remove(), 300);
-        }, 3000);
-    }
 
     function rgbToHex(rgb) {
         if (rgb.startsWith('#')) return rgb;

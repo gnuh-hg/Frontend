@@ -30,30 +30,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const toggleNew = document.getElementById('toggleNew');
     const toggleConfirm = document.getElementById('toggleConfirm');
 
-    async function fetchWithAuth(url, options = {}) {
-        const token = localStorage.getItem('access_token');
-        const defaultHeaders = {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-        };
-
-        const response = await fetch(url, {
-            ...options,
-            headers: { ...defaultHeaders, ...options.headers }
-        });
-
-        if (response.status === 401) {
-            if (!isRedirecting && !Config.TEST) {
-                isRedirecting = true;
-                window.location.href = "./account/login.html";
-                showWarning("Phiên làm việc hết hạn. Vui lòng đăng nhập lại.");
-            }
-            throw new Error("Unauthorized");
-        }
-        
-        return response;
-    }
-
     // ========== FETCH USER DATA ==========
     async function fetchUserData() {
         try {
@@ -66,7 +42,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateUI();
                 return;
             }
-            const response = await fetchWithAuth(`${API_BASE_URL}/account`);
+            const response = await Config.fetchWithAuth(`${API_BASE_URL}/account`);
             if (!response.ok) 
                 throw new Error('Failed to fetch user data');
             currentUser = await response.json();
@@ -121,7 +97,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const newName = nameInput.value.trim();
         
         if (!newName) {
-            showWarning('Please enter a name');
+            Config.showWarning('Please enter a name');
             return;
         }
         try {
@@ -129,10 +105,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Test mode - just update locally
                 currentUser.username = newName;
                 updateUI();
-                showWarning('Name updated successfully!');
+                Config.showWarning('Name updated successfully!');
                 return;
             }
-            const response = await fetch(`${Config.URL_API}/account`, {
+            const response = await Config.fetchWithAuth(`${Config.URL_API}/account`, {
                 method: 'PATCH',
                 body: JSON.stringify({ username: newName })
             });
@@ -141,10 +117,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             currentUser.username = newName;
             updateUI();
-            showWarning('Name updated successfully!');
+            Config.showWarning('Name updated successfully!');
         } catch (error) {
             console.error('Error updating name:', error);
-            showWarning('Failed to update name');
+            Config.showWarning('Failed to update name');
         }
     });
 
@@ -225,7 +201,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            const response = await fetchWithAuth(`${Config.URL_API}/account/password`, {
+            const response = await Config.fetchWithAuth(`${Config.URL_API}/account/password`, {
                 method: 'PATCH'
             });
 
@@ -234,7 +210,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error(error.detail || 'Failed to change password');
             }
             
-            showWarning('Password changed successfully!');
+            Config.showWarning('Password changed successfully!');
             currentPassword.value = '';
             newPassword.value = '';
             confirmPassword.value = '';
@@ -242,7 +218,7 @@ document.addEventListener('DOMContentLoaded', function() {
             passwordHeader.classList.remove('active');
         } catch (error) {
             console.error('Error changing password:', error);
-            showWarning(error.message || 'Failed to change password');
+            Config.showWarning(error.message || 'Failed to change password');
         }
     });
 
@@ -260,32 +236,6 @@ document.addEventListener('DOMContentLoaded', function() {
         localStorage.removeItem('access_token');
         window.location.href = './account/login.html';
     });
-
-    let lastWarningTime = 0;
-    function showWarning(warning_context) {
-        const currentTime = Date.now();
-        if (currentTime - lastWarningTime < 3000) return;
-        lastWarningTime = currentTime;
-
-        const existingWarning = document.querySelector('.warning');
-        if (existingWarning) existingWarning.remove();
-
-        const warning = document.createElement('div');
-        warning.className = 'warning';
-        warning.textContent = warning_context;
-        warning.style.cssText = `
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-            background: #ef4444; color: white; padding: 12px 24px;
-            border-radius: 8px; font-size: 14px; font-weight: 500;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 10000;
-            animation: slideDown 0.3s ease-out;
-        `;
-        document.body.appendChild(warning);
-        setTimeout(() => {
-            warning.style.animation = 'slideUp 0.3s ease-out';
-            setTimeout(() => warning.remove(), 300);
-        }, 3000);
-    }
 
     // ========== INITIALIZE ==========
     fetchUserData();
