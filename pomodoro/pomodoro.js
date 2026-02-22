@@ -202,7 +202,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     async function loadTasks() {
         if (Config.TEST) {
             tasks = [
-                { id: 1, name: 'Design dashboard UIaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' },
+                { id: 1, name: 'Design dashboard UI' },
                 { id: 2, name: 'Review backend API code' },
                 { id: 3, name: 'Write documentation' },
                 { id: 4, name: 'Fix bug in login module' },
@@ -321,13 +321,13 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
     }
 
-    async function onTimerEnd() {
+    async function onTimerEnd(isSkipped = false) {
         const s              = getSettings();
         const finishedMode   = currentMode;
         const finishedDuration = totalSeconds; // thời lượng đã đặt (giây)
 
         // Ghi nhận phiên vào backend
-        await postSession(finishedMode, finishedDuration);
+        if (!isSkipped) await postSession(finishedMode, finishedDuration);
 
         if (finishedMode === 'focus') {
             completedPomodoros++;
