@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateUI();
                 return;
             }
-            const response = await Config.fetchWithAuth(`${API_BASE_URL}/account`);
+            const response = await Config.fetchWithAuth(`${Config.URL_API}/account`);
             if (!response.ok) 
                 throw new Error('Failed to fetch user data');
             currentUser = await response.json();
@@ -202,7 +202,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             const response = await Config.fetchWithAuth(`${Config.URL_API}/account/password`, {
-                method: 'PATCH'
+                method: 'PATCH',
+                body: JSON.stringify({
+                    current_password: current,
+                    new_password: newPass,
+                    confirm_password: confirm
+                })
             });
 
             if (!response.ok) {
