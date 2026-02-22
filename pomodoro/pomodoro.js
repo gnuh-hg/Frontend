@@ -1,6 +1,11 @@
 import * as Config from '../configuration.js';
 
 document.addEventListener('DOMContentLoaded', async function () {
+    if (!Config.TEST){
+        const token = localStorage.getItem('access_token');
+        if (!token) window.location.href = '../account/login.html';
+    }
+
     // --- 1. DOM ELEMENTS ---
     const overlay          = document.getElementById('taskOverlay');
     const taskModal        = document.getElementById('taskModal');
@@ -58,7 +63,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         filtered.forEach(t => {
             const item = document.createElement('div');
             item.className = 'task-item' + (selectedTask && selectedTask.id === t.id ? ' selected' : '');
-            item.innerHTML = `<span class="task-item-dot"></span> ${t.name}`;
+            item.innerHTML = `<span class="task-item-dot"></span> <span class="task-item-name">${t.name}</span>`;
             item.addEventListener('click', () => selectTask(t));
             taskModalList.appendChild(item);
         });
@@ -197,7 +202,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     async function loadTasks() {
         if (Config.TEST) {
             tasks = [
-                { id: 1, name: 'Design dashboard UI' },
+                { id: 1, name: 'Design dashboard UIaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' },
                 { id: 2, name: 'Review backend API code' },
                 { id: 3, name: 'Write documentation' },
                 { id: 4, name: 'Fix bug in login module' },
@@ -208,7 +213,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         try {
             const res  = await Config.fetchWithAuth(`${Config.URL_API}/pomodoro/tasks`);
             if (!res.ok) return;
-            tasks = await res.json(); // [{ id, name }, ...]
+            tasks = await res.json();
         } catch (err) {
             if (err.message !== 'Unauthorized') Config.showWarning('loadTasks error:', err);
         }
@@ -218,7 +223,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     async function postSession(mode, durationSeconds) {
         if (Config.TEST) return;
-        // Map internal mode name → API mode string
+
         const modeMap = { focus: 'focus', short: 'short_break', long: 'long_break' };
         const body = {
             mode:         modeMap[mode],

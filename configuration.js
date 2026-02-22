@@ -30,7 +30,7 @@ export async function fetchWithAuth(url, options = {}, retries = 3) {
             });
 
             if (response.status === 401) {
-                window.location.href = "./account/login.html";
+                // window.location.href = "./account/login.html";
                 throw new Error("Unauthorized");
             }
 
