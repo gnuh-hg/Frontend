@@ -49,14 +49,16 @@
    2. SIDEBAR LAYOUT
    ========================================================================== */
 .sidebar-nav {
+    flex-shrink: 0;
     position: relative;
     display: flex;
     flex-direction: column;
     margin: 5px;
     margin-left: 0;
-    width: calc(30% - 5px);
+    width: calc(20% - 5px);
     min-width: 200px;
     height: calc(97vh - 60px);
+    /* height: 100%; */
     top: 3px;
     background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
     border-top-right-radius: 8px;

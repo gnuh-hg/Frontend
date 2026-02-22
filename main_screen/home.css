@@ -1,22 +1,26 @@
 * {
-  box-sizing: border-box;
+    box-sizing: border-box;
     padding: 0;
     margin: 0;
     font-family: Arial, sans-serif;
     color: white;
 }
 
+html, body {
+    height: 100%;
+    overflow: hidden; /* ← chặn scroll ở body level */
+}
+
 body {
     background: linear-gradient(135deg, #0e0d12 0%, #1a1625 100%);
-    align-items: center;
-    justify-content: center;
     overflow-x: hidden;
 }
 
 .container {
     display: flex;
+    position: relative;
     overflow: hidden;
-    height: calc(98vh - 60px);
+    height: calc(100vh - 60px); /* 98vh → 100vh */
 }
 
 ::-webkit-scrollbar {
