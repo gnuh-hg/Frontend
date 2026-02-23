@@ -1,0 +1,207 @@
+/* ── line-chart.js ── */
+
+const LC_W = 600, LC_H = 220, LC_PT = 16, LC_PB = 4;
+const LC_PH = LC_H - LC_PT - LC_PB, LC_STEPS = 5;
+
+const LC_DATASETS = {
+  week: {
+    labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+    tasks:  [5, 14, 8, 18, 11, 3, 7],
+    focus:  [1.5, 6.0, 2.0, 7.5, 3.5, 1.0, 4.0],
+  },
+  month: {
+    labels: ['D.1','D.5','D.10','D.15','D.20','D.25','D.30'],
+    tasks:  [12, 28, 15, 35, 20, 42, 18],
+    focus:  [8.5, 5.0, 12.0, 4.5, 14.0, 6.5, 10.0],
+  },
+  year: {
+    labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+    tasks:  [38, 72, 51, 88, 64, 110, 79, 95, 58, 120, 83, 140],
+    focus:  [28, 18, 35, 15, 42, 12, 38, 22, 45, 10, 50, 20],
+  },
+};
+
+let lcPeriod = 'month';
+
+const lcNs = 'http://www.w3.org/2000/svg';
+function lcEl(tag, attrs) {
+  const e = document.createElementNS(lcNs, tag);
+  Object.entries(attrs||{}).forEach(([k,v]) => e.setAttribute(k, v));
+  return e;
+}
+
+function lcNiceMax(val, steps) {
+  const raw  = Math.ceil(val * 1.1);
+  const step = Math.ceil(raw / steps / 5) * 5 || 1;
+  return step * steps;
+}
+
+function lcXp(i, n)   { return (i / (n - 1)) * LC_W; }
+function lcYp(v, yMax){ return LC_PT + LC_PH - (v / yMax) * LC_PH; }
+
+function lcCurvePath(pts) {
+  if (!pts.length) return '';
+  let d = `M${pts[0].x},${pts[0].y}`;
+  for (let i = 1; i < pts.length; i++) {
+    const cx = (pts[i-1].x + pts[i].x) / 2;
+    d += ` C${cx},${pts[i-1].y} ${cx},${pts[i].y} ${pts[i].x},${pts[i].y}`;
+  }
+  return d;
+}
+
+function lcAnimateLine(pathEl) {
+  pathEl.style.transition = 'none';
+  pathEl.style.strokeDasharray  = 'none';
+  pathEl.style.strokeDashoffset = '0';
+  requestAnimationFrame(() => {
+    const len = pathEl.getTotalLength();
+    pathEl.style.strokeDasharray  = len;
+    pathEl.style.strokeDashoffset = len;
+    pathEl.getBoundingClientRect();
+    pathEl.style.transition = 'stroke-dashoffset 0.9s cubic-bezier(0.4,0,0.2,1)';
+    pathEl.style.strokeDashoffset = '0';
+  });
+}
+
+function switchLcPeriod(p, btn) {
+  lcPeriod = p;
+  document.querySelectorAll('.lc-period-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  renderLineChart();
+}
+
+function renderLineChart() {
+  const d    = LC_DATASETS[lcPeriod];
+  const n    = d.labels.length;
+  const maxT = Math.max(...d.tasks);
+  const maxF = Math.max(...d.focus);
+  const ymT  = lcNiceMax(maxT, LC_STEPS);
+  const ymF  = lcNiceMax(maxF, LC_STEPS);
+
+  // Stats
+  document.getElementById('lcTotalTasks').textContent = d.tasks.reduce((a,b)=>a+b,0);
+  document.getElementById('lcTotalFocus').textContent = d.focus.reduce((a,b)=>a+b,0).toFixed(1) + 'h';
+  ['lcTrendTasks','lcTrendFocus'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = '↑ vs previous period';
+    el.style.color = '#22c55e';
+  });
+
+  // Left Y (tasks)
+  const yL = document.getElementById('lcYAxisLeft');
+  yL.innerHTML = '';
+  for (let i = 0; i <= LC_STEPS; i++) {
+    const div = document.createElement('div');
+    div.className = 'y-label-left';
+    div.textContent = Math.round((ymT / LC_STEPS) * i);
+    yL.appendChild(div);
+  }
+
+  // Right Y (focus)
+  const yR = document.getElementById('lcYAxisRight');
+  yR.innerHTML = '';
+  for (let i = 0; i <= LC_STEPS; i++) {
+    const div = document.createElement('div');
+    div.className = 'y-label-right';
+    div.textContent = ((ymF / LC_STEPS) * i).toFixed(1) + 'h';
+    yR.appendChild(div);
+  }
+
+  // Grid
+  const grid = document.getElementById('lcGrid');
+  grid.innerHTML = '';
+  for (let i = 0; i <= LC_STEPS; i++) {
+    const y = lcYp((ymT / LC_STEPS) * i, ymT);
+    grid.appendChild(lcEl('line', { x1:0, x2:LC_W, y1:y, y2:y, class:'grid-line' }));
+  }
+
+  // Points
+  const ptT = d.tasks.map((v,i) => ({ x: lcXp(i,n), y: lcYp(v, ymT) }));
+  const ptF = d.focus.map((v,i) => ({ x: lcXp(i,n), y: lcYp(v, ymF) }));
+
+  // Areas
+  const bot = LC_PT + LC_PH;
+  const mkArea = pts => lcCurvePath(pts) + ` L${pts.at(-1).x},${bot} L${pts[0].x},${bot} Z`;
+  document.getElementById('lcAreaT').setAttribute('d', mkArea(ptT));
+  document.getElementById('lcAreaF').setAttribute('d', mkArea(ptF));
+
+  // Lines
+  const lT = document.getElementById('lcLineT');
+  const lF = document.getElementById('lcLineF');
+  lT.setAttribute('d', lcCurvePath(ptT));
+  lF.setAttribute('d', lcCurvePath(ptF));
+  lcAnimateLine(lT);
+  lcAnimateLine(lF);
+
+  // Dots, rings, hits
+  const dotsEl  = document.getElementById('lcDots');
+  const ringsEl = document.getElementById('lcRings');
+  const hitsEl  = document.getElementById('lcHits');
+  dotsEl.innerHTML = ringsEl.innerHTML = hitsEl.innerHTML = '';
+
+  const rT = [], rF = [];
+  const stepW = LC_W / (n - 1);
+
+  d.labels.forEach((_, i) => {
+    dotsEl.appendChild(lcEl('circle', { cx:ptT[i].x, cy:ptT[i].y, r:3.5, class:'dot-tasks' }));
+    dotsEl.appendChild(lcEl('circle', { cx:ptF[i].x, cy:ptF[i].y, r:3.5, class:'dot-focus'  }));
+
+    const rt = lcEl('circle', { cx:ptT[i].x, cy:ptT[i].y, r:7, class:'ring ring-tasks' });
+    const rf = lcEl('circle', { cx:ptF[i].x, cy:ptF[i].y, r:7, class:'ring ring-focus'  });
+    ringsEl.appendChild(rt); rT.push(rt);
+    ringsEl.appendChild(rf); rF.push(rf);
+
+    const hitX = i === 0 ? 0 : ptT[i].x - stepW / 2;
+    const hitW = i === 0 ? stepW / 2 : i === n - 1 ? stepW : stepW;
+    const hit = lcEl('rect', { x:hitX, y:0, width:hitW, height:LC_H, fill:'transparent', style:'cursor:crosshair' });
+    hit.addEventListener('mouseenter', () => lcShowTip(i, d, ptT, rT, rF));
+    hit.addEventListener('mouseleave', lcHideTip);
+    hitsEl.appendChild(hit);
+  });
+
+  // X labels
+  const xLabels = document.getElementById('lcXLabels');
+  xLabels.innerHTML = '';
+  d.labels.forEach(lbl => {
+    const div = document.createElement('div');
+    div.className = 'x-label';
+    div.textContent = lbl;
+    xLabels.appendChild(div);
+  });
+}
+
+function lcShowTip(i, d, ptT, rT, rF) {
+  const svgEl = document.getElementById('lcSvg');
+  const scaleX = svgEl.getBoundingClientRect().width / LC_W;
+  const cross  = document.getElementById('lcCross');
+
+  cross.setAttribute('x1', ptT[i].x);
+  cross.setAttribute('x2', ptT[i].x);
+  cross.style.opacity = 1;
+
+  rT.forEach((r,j) => r.style.opacity = j === i ? 1 : 0);
+  rF.forEach((r,j) => r.style.opacity = j === i ? 1 : 0);
+
+  document.getElementById('lcTtLabel').textContent = d.labels[i];
+  document.getElementById('lcTtTasks').textContent = d.tasks[i] + ' tasks';
+  document.getElementById('lcTtFocus').textContent = d.focus[i] + 'h';
+
+  const tip  = document.getElementById('lcTooltip');
+  tip.classList.add('show');
+
+  const xPx  = ptT[i].x * scaleX;
+  const wrapW = document.getElementById('lcSvgWrap').offsetWidth;
+  const tipW  = tip.offsetWidth;
+  let left = xPx;
+  if (left - tipW/2 < 0) left = tipW/2;
+  if (left + tipW/2 > wrapW) left = wrapW - tipW/2;
+  tip.style.left = left + 'px';
+  tip.style.top  = '0px';
+}
+
+function lcHideTip() {
+  document.getElementById('lcTooltip').classList.remove('show');
+  document.getElementById('lcCross').style.opacity = 0;
+  document.querySelectorAll('#lcRings .ring').forEach(r => r.style.opacity = 0);
+}

@@ -2,20 +2,33 @@ export const URL_API = "https://backend-u1p2.onrender.com";
 export const TEST = false;
 
 // --- FETCH WITH RETRY ---
-export async function fetchWithRetry(url, options = {}, retries = 3) {
+export async function fetchWithRetry(url, options = {}, retries = 4) {
     for (let i = 0; i < retries; i++) {
+        const controller = new AbortController();
+        // Lần đầu timeout 10s, các lần sau 60s (chờ server wake up)
+        const timeoutMs = i === 0 ? 10000 : 60000;
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
+
         try {
-            const response = await fetch(url, options);
+            const response = await fetch(url, {
+                ...options,
+                signal: controller.signal
+            });
+            clearTimeout(timer);
             return response;
         } catch (error) {
+            clearTimeout(timer);
             if (i === retries - 1) throw error;
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            // Delay tăng dần: 3s → 6s → 12s
+            const delay = 3000 * Math.pow(2, i);
+            console.warn(`Retry ${i + 1}/${retries} sau ${delay / 1000}s...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
         }
     }
 }
 
 // --- FETCH WITH AUTH ---
-export async function fetchWithAuth(url, options = {}, retries = 3) {
+export async function fetchWithAuth(url, options = {}, retries = 4) {
     const token = localStorage.getItem('access_token');
     const defaultHeaders = {
         'Authorization': `Bearer ${token}`,
@@ -23,22 +36,29 @@ export async function fetchWithAuth(url, options = {}, retries = 3) {
     };
 
     for (let i = 0; i < retries; i++) {
+        const controller = new AbortController();
+        const timeoutMs = i === 0 ? 10000 : 60000;
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
+
         try {
             const response = await fetch(url, {
                 ...options,
-                headers: { ...defaultHeaders, ...options.headers }
+                headers: { ...defaultHeaders, ...options.headers },
+                signal: controller.signal
             });
+            clearTimeout(timer);
 
-            if (response.status === 401) {
-                // window.location.href = "./account/login.html";
-                throw new Error("Unauthorized");
-            }
+            if (response.status === 401) throw new Error("Unauthorized");
 
             return response;
         } catch (error) {
+            clearTimeout(timer);
             if (error.message === "Unauthorized") throw error;
             if (i === retries - 1) throw error;
-            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            const delay = 3000 * Math.pow(2, i);
+            console.warn(`Retry ${i + 1}/${retries} sau ${delay / 1000}s...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
         }
     }
 }
