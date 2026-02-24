@@ -48,7 +48,11 @@ window.Config = {
                     signal: controller.signal
                 });
                 clearTimeout(timer);
-                if (response.status === 401) throw new Error("Unauthorized");
+                if (response.status === 401) {
+                    localStorage.removeItem('access_token');
+                    window.location.href = "/account/login.html"; // ← dùng đường dẫn tuyệt đối
+                    throw new Error("Unauthorized");
+                }
                 return response;
             } catch (error) {
                 clearTimeout(timer);
