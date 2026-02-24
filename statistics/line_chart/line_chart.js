@@ -5,7 +5,7 @@ const LC_PH = LC_H - LC_PT - LC_PB, LC_STEPS = 5;
 
 let LC_DATASETS;
 
-(async () => {
+async function initLineChart() {
   if (Config.TEST) LC_DATASETS = {
     week: {
       labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
@@ -36,7 +36,8 @@ let LC_DATASETS;
       console.error(err);
     }
   }
-})();
+  if (LC_DATASETS) renderLineChart();
+};
 
 let lcPeriod = 'month';
 

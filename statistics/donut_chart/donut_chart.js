@@ -7,7 +7,7 @@ const DONUT_MAX_SHOWN = 4;
 const DONUT_COLOR_OTHERS = '#3f3f46';
 let DONUT_DATA;
 
-(async () => {
+async function initDonut() {
   if (Config.TEST) DONUT_DATA = {
     week: {
       tasks: [
@@ -95,7 +95,8 @@ let DONUT_DATA;
       console.error(err);
     }
   }
-})();
+  if (DONUT_DATA) renderDonut();
+};
 
 const DONUT_PERIOD_LABEL = { week: 'Last 7 days', month: 'Last 30 days', year: 'Last 12 months' };
 const DONUT_METRIC_LABEL = { tasks: 'Tasks', focus: 'Hours' };

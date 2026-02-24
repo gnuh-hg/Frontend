@@ -372,10 +372,12 @@
   });
 
   /* ── Init all sections ── */
-  renderSummary();
-  renderLineChart();
-  renderDonut();
-  renderHeatmap();
+  (async () => {
+      await initSummary();
+      await initLineChart();
+      await initDonut();
+      await initHeatmap();
+  })();
 </script>
 
 <style>

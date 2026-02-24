@@ -27,7 +27,7 @@ function hmGenerateData() {
 function hmDateKey(d) { return d.toISOString().slice(0, 10); }
 
 let HM_DATA;
-(async () => {
+async function initHeatmap() {
   if (Config.TEST) HM_DATA = hmGenerateData();
   else {
     try {
@@ -42,7 +42,8 @@ let HM_DATA;
       console.error(err);
     }
   }
-})();
+  if (HM_DATA) renderHeatmap();
+};
 
 let hmMetric  = 'tasks';
 
