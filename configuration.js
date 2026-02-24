@@ -111,7 +111,7 @@ window.Config = {
                 this.hideLoading(); // ← ẩn loading khi thành công
                 if (response.status === 401) {
                     localStorage.removeItem('access_token');
-                    window.location.href = "/Frontend/account/login.html";
+                    window.location.href = "/account/login.html";
                     throw new Error("Unauthorized");
                 }
                 return response;
