@@ -1,5 +1,3 @@
-import * as Config from '../../configuration.js';
-
 document.addEventListener('DOMContentLoaded', function() {
     // ========== STATE ==========
     let currentUser = {

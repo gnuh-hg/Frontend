@@ -1,5 +1,3 @@
-import * as Config from './../configuration.js';
-
 document.addEventListener('DOMContentLoaded', function() {
     const email_input = document.querySelector('.user-email input');
     const password_input = document.querySelector('.user-password input');

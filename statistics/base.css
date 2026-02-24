@@ -37,7 +37,7 @@
 ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.5); }
 
 body {
-  background: var(--bg-card);
+  background: linear-gradient(135deg, #0e0d12 0%, #1a1625 100%);
   font-family: 'DM Sans', sans-serif;
   color: var(--text-primary);
   min-height: 100vh;
@@ -132,3 +132,27 @@ body {
   letter-spacing: 0.08em;
   font-family: 'DM Mono', monospace;
 }
+
+.close-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: transparent;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    color: var(--text-tertiary);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.15s;
+}
+.close-btn:hover {
+    border-color: rgba(239,68,68,0.35);
+    color: #f87171;
+    background: rgba(239,68,68,0.05);
+}
+.close-btn svg { transition: transform 0.2s; flex-shrink: 0; }
+.close-btn:hover svg { transform: rotate(90deg); }

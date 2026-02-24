@@ -20,13 +20,30 @@ function hmGenerateData() {
     const baseF = deepWork ? 4 : 1, varF = deepWork ? 5 : 3;
     focus[key] = Math.round((baseF + Math.random() * varF) * 10) / 10;
   }
-
+  console.log(tasks);console.log(focus);
   return { tasks, focus };
 }
 
 function hmDateKey(d) { return d.toISOString().slice(0, 10); }
 
-const HM_DATA = hmGenerateData();
+let HM_DATA;
+(async () => {
+  if (Config.TEST) HM_DATA = hmGenerateData();
+  else {
+    try {
+      const res = await Config.fetchWithAuth(
+        `${Config.URL_API}/statistic/heatmap`
+      );
+
+      if (!res.ok) throw new Error(res.status);
+
+      HM_DATA = await res.json();
+    } catch (err) {
+      console.error(err);
+    }
+  }
+})();
+
 let hmMetric  = 'tasks';
 
 function hmGetLevel(val, metric) {

@@ -1,5 +1,3 @@
-import * as Config from '../../configuration.js';
-
 document.addEventListener('DOMContentLoaded', function() {
     const container = document.querySelector('.container-task');
     let projectId = null;
@@ -188,7 +186,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 try {
                     const response = await Config.fetchWithAuth(
-                        `${Config.URL_API}/project/${projectId}/items/${data.id}`, 
+                        `${Config.URL_API}/project/${projectId}/items/${data.id}/done`, 
                         { method: 'DELETE' }
                     );
                     

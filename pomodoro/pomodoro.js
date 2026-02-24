@@ -1,5 +1,3 @@
-import * as Config from '../configuration.js';
-
 document.addEventListener('DOMContentLoaded', async function () {
     if (!Config.TEST){
         const token = localStorage.getItem('access_token');

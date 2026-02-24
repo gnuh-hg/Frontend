@@ -1,5 +1,3 @@
-import * as Config from '../configuration.js';
-
 document.addEventListener('DOMContentLoaded', function() {
     // DOM Elements
     const name_input = document.querySelector('.user-name input');

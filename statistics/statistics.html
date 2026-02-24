@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Statistics</title>
+<script src='../configuration.js'></script>
+
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="base.css">
 <link rel="stylesheet" href="summary/summary.css">
@@ -21,6 +23,13 @@
       <div class="page-title">Statistics</div>
       <div class="page-subtitle" id="pageDate"></div>
     </div>
+    <button class="close-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+      Close Statistics
+    </button>
   </div>
 
   <!-- ══════════════════════════════════════════
@@ -127,13 +136,6 @@
             <span id="sumRateDone">—</span>
           </div>
         </div>
-
-        <!-- Best day of week (wide) -->
-        <div class="stat-card stat-card-wide" style="--c:#818cf8">
-          <div class="stat-card-label">Productivity by day</div>
-          <div class="best-days" id="summaryBestDays"></div>
-        </div>
-
       </div>
     </div>
   </div>
@@ -360,6 +362,14 @@
                   'July','August','September','October','November','December'];
   document.getElementById('pageDate').textContent =
     `${months[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
+
+  document.querySelector('.close-btn')?.addEventListener('click', () => {
+      document.body.style.transition = 'opacity 0.3s';
+      document.body.style.opacity = '0';
+      setTimeout(() => {
+          window.location.href = '../index.html';
+      }, 300)
+  });
 
   /* ── Init all sections ── */
   renderSummary();

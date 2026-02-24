@@ -1,34 +1,48 @@
 /* ── summary.js ── */
 
-const SUMMARY_DATASETS = {
-  week: {
-    tasks:   [5, 14, 8, 18, 11, 3, 7],
-    focus:   [1.5, 6.0, 2.0, 7.5, 3.5, 1.0, 4.0],
-    pomo:    [3, 10, 5, 13, 7, 2, 5],
-    created: 74, done: 56,
-    streak: 4, bestStreak: 12,
-    prevTasks: 52, prevFocus: 19.5, prevPomo: 31,
-    byDow: [7, 14, 8, 18, 11, 3, 5],
-  },
-  month: {
-    tasks:   [12,28,15,35,20,42,18,30,25,38,22,45,19,33,28,40,17,36,24,41,20,38,26,44,21,37,23,42,18,35],
-    focus:   [8.5,5,12,4.5,14,6.5,10,7,11,4,13,5.5,9,6,10.5,4,12,5,9.5,5,11,4.5,10,5,12,4.5,9,5.5,11,4],
-    pomo:    [8,20,11,25,14,30,13,22,18,27,16,32,14,24,20,28,12,26,17,29,14,27,18,31,15,27,16,30,13,25],
-    created: 880, done: 694,
-    streak: 4, bestStreak: 29,
-    prevTasks: 612, prevFocus: 198, prevPomo: 401,
-    byDow: [42, 148, 120, 165, 138, 95, 55],
-  },
-  year: {
-    tasks:   [38,72,51,88,64,110,79,95,58,120,83,140],
-    focus:   [28,18,35,15,42,12,38,22,45,10,50,20],
-    pomo:    [65,130,92,158,115,198,142,171,104,216,149,252],
-    created: 1240, done: 998,
-    streak: 4, bestStreak: 29,
-    prevTasks: 820, prevFocus: 267, prevPomo: 1050,
-    byDow: [185, 520, 442, 598, 510, 342, 195],
-  },
-};
+let SUMMARY_DATASETS;
+
+(async () => {
+  if (Config.TEST) SUMMARY_DATASETS = {
+    week: {
+      tasks:   [5, 14, 8, 18, 11, 3, 7],
+      focus:   [1.5, 6.0, 2.0, 7.5, 3.5, 1.0, 4.0],
+      pomo:    [3, 10, 5, 13, 7, 2, 5],
+      created: 74, done: 56,
+      streak: 4, bestStreak: 12,
+      prevTasks: 52, prevFocus: 19.5, prevPomo: 31
+    },
+    month: {
+      tasks:   [12,28,15,35,20,42,18,30,25,38,22,45,19,33,28,40,17,36,24,41,20,38,26,44,21,37,23,42,18,35],
+      focus:   [8.5,5,12,4.5,14,6.5,10,7,11,4,13,5.5,9,6,10.5,4,12,5,9.5,5,11,4.5,10,5,12,4.5,9,5.5,11,4],
+      pomo:    [8,20,11,25,14,30,13,22,18,27,16,32,14,24,20,28,12,26,17,29,14,27,18,31,15,27,16,30,13,25],
+      created: 880, done: 694,
+      streak: 4, bestStreak: 29,
+      prevTasks: 612, prevFocus: 198, prevPomo: 401
+    },
+    year: {
+      tasks:   [38,72,51,88,64,110,79,95,58,120,83,140],
+      focus:   [28,18,35,15,42,12,38,22,45,10,50,20],
+      pomo:    [65,130,92,158,115,198,142,171,104,216,149,252],
+      created: 1240, done: 998,
+      streak: 4, bestStreak: 29,
+      prevTasks: 820, prevFocus: 267, prevPomo: 1050
+    },
+  };
+  else {
+    try {
+      const res = await Config.fetchWithAuth(
+        `${Config.URL_API}/statistic/summary`
+      );
+
+      if (!res.ok) throw new Error(res.status);
+
+      SUMMARY_DATASETS = await res.json();
+    } catch (err) {
+      console.error(err);
+    }
+  }
+})();
 
 const DAYS_DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
@@ -75,34 +89,6 @@ function buildSparkline(vals, lineId, areaId) {
   if (areaEl) areaEl.setAttribute('d', d + ` L${pts.at(-1).x},${H} L${pts[0].x},${H} Z`);
 }
 
-function buildBestDays(byDow) {
-  const container = document.getElementById('summaryBestDays');
-  if (!container) return;
-  container.innerHTML = '';
-  const maxV   = Math.max(...byDow);
-  const bestIdx = byDow.indexOf(maxV);
-
-  byDow.forEach((v, i) => {
-    const wrap = document.createElement('div');
-    wrap.className = 'day-bar-wrap' + (i === bestIdx ? ' best' : '');
-
-    const bg   = document.createElement('div'); bg.className = 'day-bar-bg';
-    const fill = document.createElement('div'); fill.className = 'day-bar-fill';
-    fill.style.height = '0%';
-    bg.appendChild(fill);
-
-    const lbl = document.createElement('div');
-    lbl.className = 'day-name';
-    lbl.textContent = DAYS_DOW[i];
-
-    wrap.appendChild(bg);
-    wrap.appendChild(lbl);
-    container.appendChild(wrap);
-
-    setTimeout(() => { fill.style.height = Math.round((v / maxV) * 100) + '%'; }, 50 + i * 60);
-  });
-}
-
 function renderSummary() {
   const d = SUMMARY_DATASETS[summaryPeriod];
 
@@ -132,5 +118,4 @@ function renderSummary() {
   buildSparkline(d.tasks, 'sparkTasksLine', 'sparkTasksArea');
   buildSparkline(d.focus, 'sparkFocusLine', 'sparkFocusArea');
   buildSparkline(d.pomo,  'sparkPomoLine',  'sparkPomoArea');
-  buildBestDays(d.byDow);
 }

@@ -3,23 +3,40 @@
 const LC_W = 600, LC_H = 220, LC_PT = 16, LC_PB = 4;
 const LC_PH = LC_H - LC_PT - LC_PB, LC_STEPS = 5;
 
-const LC_DATASETS = {
-  week: {
-    labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
-    tasks:  [5, 14, 8, 18, 11, 3, 7],
-    focus:  [1.5, 6.0, 2.0, 7.5, 3.5, 1.0, 4.0],
-  },
-  month: {
-    labels: ['D.1','D.5','D.10','D.15','D.20','D.25','D.30'],
-    tasks:  [12, 28, 15, 35, 20, 42, 18],
-    focus:  [8.5, 5.0, 12.0, 4.5, 14.0, 6.5, 10.0],
-  },
-  year: {
-    labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
-    tasks:  [38, 72, 51, 88, 64, 110, 79, 95, 58, 120, 83, 140],
-    focus:  [28, 18, 35, 15, 42, 12, 38, 22, 45, 10, 50, 20],
-  },
-};
+let LC_DATASETS;
+
+(async () => {
+  if (Config.TEST) LC_DATASETS = {
+    week: {
+      labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+      tasks:  [5, 14, 8, 18, 11, 3, 7],
+      focus:  [1.5, 6.0, 2.0, 7.5, 3.5, 1.0, 4.0],
+    },
+    month: {
+      labels: ['D.1','D.5','D.10','D.15','D.20','D.25','D.30'],
+      tasks:  [12, 28, 15, 35, 20, 42, 18],
+      focus:  [8.5, 5.0, 12.0, 4.5, 14.0, 6.5, 10.0],
+    },
+    year: {
+      labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+      tasks:  [38, 72, 51, 88, 64, 110, 79, 95, 58, 120, 83, 140],
+      focus:  [28, 18, 35, 15, 42, 12, 38, 22, 45, 10, 50, 20],
+    },
+  };
+  else {
+    try {
+      const res = await Config.fetchWithAuth(
+        `${Config.URL_API}/statistic/line_chart`
+      );
+
+      if (!res.ok) throw new Error(res.status);
+
+      LC_DATASETS = await res.json();
+    } catch (err) {
+      console.error(err);
+    }
+  }
+})();
 
 let lcPeriod = 'month';
 

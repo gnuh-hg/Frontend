@@ -1,5 +1,3 @@
-import * as Config from '../../configuration.js';
-
 document.addEventListener('DOMContentLoaded', function() {
     // --- 1. TRUY XUẤT DOM ELEMENTS ---
     const overlay = document.querySelector('.modal-overlay');

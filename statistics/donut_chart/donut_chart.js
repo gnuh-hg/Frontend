@@ -4,38 +4,101 @@ const DONUT_R = 56;
 const DONUT_CIRC = 2 * Math.PI * DONUT_R;
 const DONUT_GAP  = (2.2 / 360) * DONUT_CIRC;
 const DONUT_MAX_SHOWN = 4;
-const DONUT_COLORS = ['#6366f1','#7c3aed','#22c55e','#ef4444','#f59e0b'];
 const DONUT_COLOR_OTHERS = '#3f3f46';
+let DONUT_DATA;
 
-const DONUT_PROJECTS = [
-  { name: 'Website Redesign' },
-  { name: 'Mobile App'       },
-  { name: 'Backend API'      },
-  { name: 'Marketing'        },
-  { name: 'Analytics'        },
-  { name: 'Design System'    },
-  { name: 'DevOps'           },
-  { name: 'Customer Portal'  },
-  { name: 'Internal Tools'   },
-];
+(async () => {
+  if (Config.TEST) DONUT_DATA = {
+    week: {
+      tasks: [
+        { name: 'Website Redesign', value: 14, color: '#6366f1' },
+        { name: 'Backend API',      value: 11, color: '#22c55e' },
+        { name: 'Mobile App',       value: 9,  color: '#7c3aed' },
+        { name: 'Internal Tools',   value: 9,  color: '#8b5cf6' },
+        { name: 'Marketing',        value: 6,  color: '#ef4444' },
+        { name: 'DevOps',           value: 5,  color: '#10b981' },
+        { name: 'Analytics',        value: 4,  color: '#f59e0b' },
+        { name: 'Design System',    value: 3,  color: '#3b82f6' },
+        { name: 'Customer Portal',  value: 2,  color: '#f97316' }
+      ],
+      focus: [
+        { name: 'Website Redesign', value: 5.5, color: '#6366f1' },
+        { name: 'Backend API',      value: 4.5, color: '#22c55e' },
+        { name: 'Mobile App',       value: 3.5, color: '#7c3aed' },
+        { name: 'Marketing',        value: 2.0, color: '#ef4444' },
+        { name: 'DevOps',           value: 2.0, color: '#10b981' },
+        { name: 'Analytics',        value: 1.5, color: '#f59e0b' },
+        { name: 'Design System',    value: 1.0, color: '#3b82f6' },
+        { name: 'Internal Tools',   value: 0.5, color: '#8b5cf6' },
+        { name: 'Customer Portal',  value: 0.5, color: '#f97316' }
+      ]
+    },
+    month: {
+      tasks: [
+        { name: 'Website Redesign', value: 52, color: '#6366f1' },
+        { name: 'Backend API',      value: 44, color: '#22c55e' },
+        { name: 'Mobile App',       value: 38, color: '#7c3aed' },
+        { name: 'Marketing',        value: 21, color: '#ef4444' },
+        { name: 'DevOps',           value: 19, color: '#10b981' },
+        { name: 'Analytics',        value: 17, color: '#f59e0b' },
+        { name: 'Design System',    value: 12, color: '#3b82f6' },
+        { name: 'Customer Portal',  value: 8,  color: '#f97316' },
+        { name: 'Internal Tools',   value: 6,  color: '#8b5cf6' }
+      ],
+      focus: [
+        { name: 'Website Redesign', value: 21.0, color: '#6366f1' },
+        { name: 'Backend API',      value: 18.0, color: '#22c55e' },
+        { name: 'Mobile App',       value: 15.5, color: '#7c3aed' },
+        { name: 'Marketing',        value: 8.0,  color: '#ef4444' },
+        { name: 'DevOps',           value: 7.5,  color: '#10b981' },
+        { name: 'Analytics',        value: 6.5,  color: '#f59e0b' },
+        { name: 'Design System',    value: 5.0,  color: '#3b82f6' },
+        { name: 'Customer Portal',  value: 3.0,  color: '#f97316' },
+        { name: 'Internal Tools',   value: 2.5,  color: '#8b5cf6' }
+      ]
+    },
+    year: {
+      tasks: [
+        { name: 'Website Redesign', value: 310, color: '#6366f1' },
+        { name: 'Backend API',      value: 280, color: '#22c55e' },
+        { name: 'Mobile App',       value: 240, color: '#7c3aed' },
+        { name: 'Marketing',        value: 120, color: '#ef4444' },
+        { name: 'DevOps',           value: 110, color: '#10b981' },
+        { name: 'Analytics',        value: 95,  color: '#f59e0b' },
+        { name: 'Design System',    value: 74,  color: '#3b82f6' },
+        { name: 'Customer Portal',  value: 48,  color: '#f97316' },
+        { name: 'Internal Tools',   value: 36,  color: '#8b5cf6' }
+      ],
+      focus: [
+        { name: 'Website Redesign', value: 124, color: '#6366f1' },
+        { name: 'Backend API',      value: 112, color: '#22c55e' },
+        { name: 'Mobile App',       value: 96,  color: '#7c3aed' },
+        { name: 'Marketing',        value: 48,  color: '#ef4444' },
+        { name: 'DevOps',           value: 44,  color: '#10b981' },
+        { name: 'Analytics',        value: 38,  color: '#f59e0b' },
+        { name: 'Design System',    value: 30,  color: '#3b82f6' },
+        { name: 'Customer Portal',  value: 19,  color: '#f97316' },
+        { name: 'Internal Tools',   value: 14,  color: '#8b5cf6' }
+      ]
+    }
+  };
+  else {
+    try {
+      const res = await Config.fetchWithAuth(
+        `${Config.URL_API}/statistic/donut_chart`
+      );
 
-const DONUT_DATA = {
-  week: {
-    tasks: [14, 9, 11, 6, 4, 3, 5, 2, 1],
-    focus: [5.5, 3.5, 4.5, 2.0, 1.5, 1.0, 2.0, 0.5, 0.5],
-  },
-  month: {
-    tasks: [52, 38, 44, 21, 17, 12, 19, 8, 6],
-    focus: [21.0, 15.5, 18.0, 8.0, 6.5, 5.0, 7.5, 3.0, 2.5],
-  },
-  year: {
-    tasks: [310, 240, 280, 120, 95, 74, 110, 48, 36],
-    focus: [124, 96, 112, 48, 38, 30, 44, 19, 14],
-  },
-};
+      if (!res.ok) throw new Error(res.status);
+
+      DONUT_DATA = await res.json();
+    } catch (err) {
+      console.error(err);
+    }
+  }
+})();
 
 const DONUT_PERIOD_LABEL = { week: 'Last 7 days', month: 'Last 30 days', year: 'Last 12 months' };
-const DONUT_METRIC_LABEL = { tasks: 'Tasks', focus: 'Focus hours' };
+const DONUT_METRIC_LABEL = { tasks: 'Tasks', focus: 'Hours' };
 const DONUT_METRIC_UNIT  = { tasks: ' tasks', focus: 'h' };
 const DONUT_METRIC_CLASS = { tasks: 'active-tasks', focus: 'active-focus' };
 
@@ -70,21 +133,24 @@ function donutSetCenter(num, color) {
   el.style.color = color || '';
 }
 
-function donutBuildSegments(vals) {
-  const indexed = vals.map((v,i) => ({i,v})).sort((a,b) => b.v - a.v);
-  if (indexed.length <= DONUT_MAX_SHOWN) {
-    return indexed.map(({i,v}, si) => ({ name: DONUT_PROJECTS[i].name, value:v, color: DONUT_COLORS[si % DONUT_COLORS.length], isOthers:false }));
+function donutBuildSegments(dataArray) {
+  if (dataArray.length <= DONUT_MAX_SHOWN) {
+    return dataArray.map(item => ({ ...item, isOthers: false }));
   }
-  const top  = indexed.slice(0, DONUT_MAX_SHOWN);
-  const rest = indexed.slice(DONUT_MAX_SHOWN);
-  const segs = top.map(({i,v}, si) => ({ name: DONUT_PROJECTS[i].name, value:v, color: DONUT_COLORS[si % DONUT_COLORS.length], isOthers:false }));
+
+  const top = dataArray.slice(0, DONUT_MAX_SHOWN);
+  const rest = dataArray.slice(DONUT_MAX_SHOWN);
+
+  const segs = top.map(item => ({ ...item, isOthers: false }));
+  
   segs.push({
     name: `Others (${rest.length})`,
-    value: rest.reduce((a,b) => a+b.v, 0),
+    value: rest.reduce((a, b) => a + b.value, 0),
     color: DONUT_COLOR_OTHERS,
     isOthers: true,
-    children: rest.map(({i,v}) => ({ name: DONUT_PROJECTS[i].name, value:v })),
+    children: rest
   });
+  
   return segs;
 }
 
@@ -115,9 +181,12 @@ function donutDeactivate(total) {
 }
 
 function renderDonut() {
-  const vals  = DONUT_DATA[donutPeriod][donutMetric];
-  const total = vals.reduce((a,b)=>a+b,0);
-  const segs  = donutBuildSegments(vals);
+  const currentData = DONUT_DATA[donutPeriod][donutMetric];
+  // Thay đổi 1: Tính tổng dựa trên thuộc tính .value của object
+  const total = currentData.reduce((acc, item) => acc + item.value, 0);
+  // Thay đổi 2: Truyền mảng object vào hàm build (hàm build này sẽ tự sort như đã nói ở bước trước)
+  const segs  = donutBuildSegments(currentData);
+  
   const svg   = document.getElementById('donutSvg');
   const legEl = document.getElementById('donutLegend');
 
@@ -136,6 +205,7 @@ function renderDonut() {
   let offset = 0;
 
   segs.forEach((seg, i) => {
+    // Thay đổi 3: Sử dụng seg.value trực tiếp từ object trong segs
     const pct = seg.value / total;
     const len = pct * DONUT_CIRC - DONUT_GAP;
 
