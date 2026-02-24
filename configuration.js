@@ -1,7 +1,7 @@
 /* ── configuration.js ── */
 window.Config = {
     URL_API: "https://backend-u1p2.onrender.com",
-    TEST: true,
+    TEST: false,
     _lastWarningTime: 0,
     _loadingCount: 0, // đếm số request đang chạy
 
@@ -111,7 +111,7 @@ window.Config = {
                 this.hideLoading(); // ← ẩn loading khi thành công
                 if (response.status === 401) {
                     localStorage.removeItem('access_token');
-                    window.location.href = "/account/login.html";
+                    window.location.href = "/Frontend/account/login.html";
                     throw new Error("Unauthorized");
                 }
                 return response;
