@@ -368,7 +368,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
         remainingSeconds = 0;
         updateDisplay();
-        onTimerEnd();
+        onTimerEnd(true);
     }
 
     function closePomodoro() {
