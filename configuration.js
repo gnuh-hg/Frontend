@@ -120,9 +120,12 @@ window.Config = {
                 if (error.message === "Unauthorized") throw error;
                 if (i === retries - 1) {
                     this.hideLoading(); // ← ẩn loading khi hết retry
+                    this.showWarning("Connection error");
+                    localStorage.removeItem('access_token');
+                    window.location.href = "/account/login.html";
                     throw error;
                 }
-                const delay = 3000 * Math.pow(2, i);
+                const delay = 1000 * Math.pow(2, i);
                 console.warn(`Retry ${i + 1}/${retries} sau ${delay / 1000}s...`);
                 await new Promise(resolve => setTimeout(resolve, delay));
             }
