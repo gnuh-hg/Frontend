@@ -100,7 +100,20 @@
   font-weight: 500;
   padding: 1px 6px;
   border-radius: 99px;
+  line-height: 1;
+  vertical-align: middle;
 }
+
+.delta-arrow {
+  line-height: 1;
+  display: flex;
+  align-items: center;
+}
+
+.delta-pct {
+  line-height: 1;
+}
+
 .delta.up   { color: var(--accent-green);  background: rgba(34,197,94,0.1); }
 .delta.down { color: var(--accent-danger); background: rgba(239,68,68,0.1); }
 .delta.neutral { color: var(--text-secondary); background: rgba(148,148,160,0.1); }

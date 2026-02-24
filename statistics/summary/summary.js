@@ -65,7 +65,9 @@ function applyDelta(id, curr, prev) {
   const { pct, dir } = calcDelta(curr, prev);
   const el = document.getElementById(id);
   el.className = 'delta ' + dir;
-  el.textContent = (dir === 'up' ? '↑' : dir === 'down' ? '↓' : '—') + ' ' + Math.abs(pct) + '%';
+  
+  const arrow = dir === 'up' ? '↑' : dir === 'down' ? '↓' : '—';
+  el.innerHTML = `<span class="delta-arrow">${arrow}</span><span class="delta-pct">${Math.abs(pct)}%</span>`;
 }
 
 function buildSparkline(vals, lineId, areaId) {
