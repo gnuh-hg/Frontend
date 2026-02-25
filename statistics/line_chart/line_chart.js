@@ -55,8 +55,21 @@ function lcGetWidth() {
 }
 
 function lcNiceMax(val, steps) {
-  const raw  = Math.ceil(val * 1.1);
-  const step = Math.ceil(raw / steps / 5) * 5 || 1;
+  if (val <= 0) return steps; // fallback
+
+  const raw = val * 1.1;
+
+  // Tính "magnitude" của raw
+  const mag = Math.pow(10, Math.floor(Math.log10(raw / steps)));
+
+  // Các mức step đẹp: 1, 2, 2.5, 5, 10 × magnitude
+  const niceSteps = [1, 2, 2.5, 5, 10];
+  let step = mag;
+  for (const s of niceSteps) {
+    step = s * mag;
+    if (step * steps >= raw) break;
+  }
+
   return step * steps;
 }
 
@@ -123,7 +136,9 @@ function renderLineChart() {
   for (let i = 0; i <= LC_STEPS; i++) {
     const div = document.createElement('div');
     div.className = 'y-label-left';
-    div.textContent = Math.round((ymT / LC_STEPS) * i);
+    div.textContent = Number.isInteger((ymF / LC_STEPS) * i)
+  ? ((ymF / LC_STEPS) * i) + 'h'
+  : ((ymF / LC_STEPS) * i).toFixed(1) + 'h';
     yL.appendChild(div);
   }
 
