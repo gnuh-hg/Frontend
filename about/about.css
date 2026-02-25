@@ -813,7 +813,6 @@ footer strong { color: var(--text-secondary); }
 /* ── RESPONSIVE ── */
 @media (max-width: 900px) {
   nav { padding: 16px 24px; }
-  .nav-links { display: none; }
   section { padding: 72px 24px; }
   .hero { padding: 100px 24px 60px; }
   .mission-grid { grid-template-columns: 1fr; gap: 48px; }
@@ -822,4 +821,8 @@ footer strong { color: var(--text-secondary); }
   .hero-stats { gap: 28px; }
   footer { flex-direction: column; gap: 12px; text-align: center; }
   .btn-close-about span { display: none; }
+}
+
+@media (max-width: 475px) {
+  .nav-links { display: none; }
 }

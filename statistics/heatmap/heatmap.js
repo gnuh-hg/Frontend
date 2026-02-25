@@ -126,7 +126,7 @@ function renderHeatmap() {
     if (el) el.style.background = levels[i];
   }
 
-  // Build grid — ĐÃ XÓA: monthRow logic
+  // Build grid
   const grid = document.getElementById('hmGrid');
   grid.innerHTML = '';
 
@@ -135,8 +135,6 @@ function renderHeatmap() {
   while (cur <= today) {
     const col = document.createElement('div');
     col.className = 'heatmap-col';
-
-    // ĐÃ XÓA: mLabel / monthRow.appendChild(mLabel)
 
     for (let dow = 0; dow < 7; dow++) {
       const cell = document.createElement('div');
