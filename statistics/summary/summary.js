@@ -38,7 +38,6 @@ async function initSummary() {
             console.log('summary', SUMMARY_DATASETS);
         } catch (err) {
             console.error(err);
-            Config.showWarning('Không thể tải dữ liệu thống kê');
         }
     }
     if (SUMMARY_DATASETS) renderSummary();
