@@ -1,6 +1,6 @@
 /* ── line-chart.js ── */
 
-const LC_W = 600, LC_H = 220, LC_PT = 16, LC_PB = 4;
+const LC_H = 220, LC_PT = 16, LC_PB = 4;
 const LC_PH = LC_H - LC_PT - LC_PB, LC_STEPS = 5;
 
 let LC_DATASETS;
@@ -28,16 +28,18 @@ async function initLineChart() {
       const res = await Config.fetchWithAuth(
         `${Config.URL_API}/statistic/line_chart`
       );
-
       if (!res.ok) throw new Error(res.status);
-
       LC_DATASETS = await res.json();
+      console.log(LC_DATASETS);
     } catch (err) {
       console.error(err);
     }
   }
-  if (LC_DATASETS) renderLineChart();
-};
+  if (LC_DATASETS) {
+    renderLineChart();
+    window.addEventListener('resize', () => renderLineChart());
+  }
+}
 
 let lcPeriod = 'month';
 
@@ -48,14 +50,18 @@ function lcEl(tag, attrs) {
   return e;
 }
 
+function lcGetWidth() {
+  return document.getElementById('lcSvg').getBoundingClientRect().width || 600;
+}
+
 function lcNiceMax(val, steps) {
   const raw  = Math.ceil(val * 1.1);
   const step = Math.ceil(raw / steps / 5) * 5 || 1;
   return step * steps;
 }
 
-function lcXp(i, n)   { return (i / (n - 1)) * LC_W; }
-function lcYp(v, yMax){ return LC_PT + LC_PH - (v / yMax) * LC_PH; }
+function lcXp(i, n, W)  { return (i / (n - 1)) * W; }
+function lcYp(v, yMax)  { return LC_PT + LC_PH - (v / yMax) * LC_PH; }
 
 function lcCurvePath(pts) {
   if (!pts.length) return '';
@@ -89,12 +95,17 @@ function switchLcPeriod(p, btn) {
 }
 
 function renderLineChart() {
+  const W    = lcGetWidth();
   const d    = LC_DATASETS[lcPeriod];
   const n    = d.labels.length;
   const maxT = Math.max(...d.tasks);
   const maxF = Math.max(...d.focus);
   const ymT  = lcNiceMax(maxT, LC_STEPS);
   const ymF  = lcNiceMax(maxF, LC_STEPS);
+
+  // Update viewBox to match real width
+  const svg = document.getElementById('lcSvg');
+  svg.setAttribute('viewBox', `0 0 ${W} ${LC_H}`);
 
   // Stats
   document.getElementById('lcTotalTasks').textContent = d.tasks.reduce((a,b)=>a+b,0);
@@ -131,12 +142,12 @@ function renderLineChart() {
   grid.innerHTML = '';
   for (let i = 0; i <= LC_STEPS; i++) {
     const y = lcYp((ymT / LC_STEPS) * i, ymT);
-    grid.appendChild(lcEl('line', { x1:0, x2:LC_W, y1:y, y2:y, class:'grid-line' }));
+    grid.appendChild(lcEl('line', { x1:0, x2:W, y1:y, y2:y, class:'grid-line' }));
   }
 
   // Points
-  const ptT = d.tasks.map((v,i) => ({ x: lcXp(i,n), y: lcYp(v, ymT) }));
-  const ptF = d.focus.map((v,i) => ({ x: lcXp(i,n), y: lcYp(v, ymF) }));
+  const ptT = d.tasks.map((v,i) => ({ x: lcXp(i,n,W), y: lcYp(v, ymT) }));
+  const ptF = d.focus.map((v,i) => ({ x: lcXp(i,n,W), y: lcYp(v, ymF) }));
 
   // Areas
   const bot = LC_PT + LC_PH;
@@ -159,7 +170,7 @@ function renderLineChart() {
   dotsEl.innerHTML = ringsEl.innerHTML = hitsEl.innerHTML = '';
 
   const rT = [], rF = [];
-  const stepW = LC_W / (n - 1);
+  const stepW = W / (n - 1);
 
   d.labels.forEach((_, i) => {
     dotsEl.appendChild(lcEl('circle', { cx:ptT[i].x, cy:ptT[i].y, r:3.5, class:'dot-tasks' }));
@@ -171,27 +182,17 @@ function renderLineChart() {
     ringsEl.appendChild(rf); rF.push(rf);
 
     const hitX = i === 0 ? 0 : ptT[i].x - stepW / 2;
-    const hitW = i === 0 ? stepW / 2 : i === n - 1 ? stepW : stepW;
+    const hitW = i === 0 || i === n - 1 ? stepW / 2 : stepW;
     const hit = lcEl('rect', { x:hitX, y:0, width:hitW, height:LC_H, fill:'transparent', style:'cursor:crosshair' });
     hit.addEventListener('mouseenter', () => lcShowTip(i, d, ptT, rT, rF));
     hit.addEventListener('mouseleave', lcHideTip);
     hitsEl.appendChild(hit);
   });
-
-  // X labels
-  const xLabels = document.getElementById('lcXLabels');
-  xLabels.innerHTML = '';
-  d.labels.forEach(lbl => {
-    const div = document.createElement('div');
-    div.className = 'x-label';
-    div.textContent = lbl;
-    xLabels.appendChild(div);
-  });
 }
 
 function lcShowTip(i, d, ptT, rT, rF) {
   const svgEl = document.getElementById('lcSvg');
-  const scaleX = svgEl.getBoundingClientRect().width / LC_W;
+  const scaleX = svgEl.getBoundingClientRect().width / lcGetWidth();
   const cross  = document.getElementById('lcCross');
 
   cross.setAttribute('x1', ptT[i].x);
@@ -208,7 +209,7 @@ function lcShowTip(i, d, ptT, rT, rF) {
   const tip  = document.getElementById('lcTooltip');
   tip.classList.add('show');
 
-  const xPx  = ptT[i].x * scaleX;
+  const xPx   = ptT[i].x * scaleX;
   const wrapW = document.getElementById('lcSvgWrap').offsetWidth;
   const tipW  = tip.offsetWidth;
   let left = xPx;

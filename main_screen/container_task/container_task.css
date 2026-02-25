@@ -586,34 +586,6 @@ h1 .btn-done:hover {
     min-width: 50px;
 }
 
-.btn-timer {
-    width: 26px;
-    height: 26px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--accent-primary);
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    color: white;
-}
-
-.btn-timer:hover {
-    background: var(--accent-hover);
-    transform: scale(1.08);
-}
-
-.btn-timer.active {
-    background: #ef4444;
-}
-
-.btn-timer svg {
-    width: 14px;
-    height: 14px;
-}
-
 /* Notes Section - Full width */
 .detail-section-notes {
     flex-direction: column;

@@ -164,6 +164,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function attachEvents(item, data){
+        console.log(data);
         item.querySelector('.task-header button').addEventListener('click', async function (e) {
             e.stopPropagation();
             if (item.classList.contains('completed')) return;
@@ -622,36 +623,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const taskDatePicker = new TaskDatePicker();
 
     // ========== TIMER ==========
-    const btnTimer = document.querySelector('.btn-timer');
-    let timerInterval = null;
-    let isTimerRunning = false;
-    
-    if (btnTimer) {
-        btnTimer.addEventListener('click', function(e) {
-            e.stopPropagation();
-            
-            if (isTimerRunning) {
-                clearInterval(timerInterval);
-                btnTimer.classList.remove('active');
-                btnTimer.innerHTML = `
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                    </svg>
-                `;
-                isTimerRunning = false;
-            } else {
-                
-                btnTimer.classList.add('active');
-                btnTimer.innerHTML = `
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="6" y="4" width="4" height="16"></rect>
-                        <rect x="14" y="4" width="4" height="16"></rect>
-                    </svg>
-                `;
-                isTimerRunning = true;
-            }
-        });
-    }
+
 
     // ========== NOTES ==========
     const notesTextarea = document.querySelector('.notes-textarea');

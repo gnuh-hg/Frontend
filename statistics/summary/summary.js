@@ -35,6 +35,7 @@ async function initSummary() {
             const res = await Config.fetchWithAuth(`${Config.URL_API}/statistic/summary`);
             if (!res.ok) throw new Error(res.status);
             SUMMARY_DATASETS = await res.json();
+            console.log(SUMMARY_DATASETS);
         } catch (err) {
             console.error(err);
             Config.showWarning('Không thể tải dữ liệu thống kê');

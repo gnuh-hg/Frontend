@@ -179,15 +179,27 @@
 .donut-footer-label { font-size: 11px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; font-family: 'DM Mono', monospace; }
 .donut-footer-value { font-size: 14px; font-weight: 600; font-family: 'DM Mono', monospace; transition: color 0.25s; }
 
-@media (max-width: 520px) {
-  .donut-chart-area { flex-direction: column; align-items: flex-start; }
-  .donut-controls {
-    flex-direction: row;
-  }
-}
-
 @media (max-width: 720px) {
   .donut-section .donut-controls {
     align-items: flex-end;
   }
 }
+
+@media (max-width: 520px) {
+  
+  .donut-controls {
+    flex-direction: row;
+  }
+}
+
+
+@media (max-width: 511px) {
+  .donut-controls {
+    flex-direction: column;
+  }
+  .donut-controls, .donut-metric-row {
+    margin: auto;
+  }
+  .donut-chart-area { flex-direction: column;}
+}
+

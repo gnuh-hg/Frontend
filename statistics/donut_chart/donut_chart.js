@@ -91,6 +91,7 @@ async function initDonut() {
       if (!res.ok) throw new Error(res.status);
 
       DONUT_DATA = await res.json();
+      console.log(DONUT_DATA);
     } catch (err) {
       console.error(err);
     }

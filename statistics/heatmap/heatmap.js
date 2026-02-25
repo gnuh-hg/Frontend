@@ -20,7 +20,6 @@ function hmGenerateData() {
     const baseF = deepWork ? 4 : 1, varF = deepWork ? 5 : 3;
     focus[key] = Math.round((baseF + Math.random() * varF) * 10) / 10;
   }
-  console.log(tasks);console.log(focus);
   return { tasks, focus };
 }
 
@@ -31,21 +30,18 @@ async function initHeatmap() {
   if (Config.TEST) HM_DATA = hmGenerateData();
   else {
     try {
-      const res = await Config.fetchWithAuth(
-        `${Config.URL_API}/statistic/heatmap`
-      );
-
+      const res = await Config.fetchWithAuth(`${Config.URL_API}/statistic/heatmap`);
       if (!res.ok) throw new Error(res.status);
-
       HM_DATA = await res.json();
+      console.log(HM_DATA);
     } catch (err) {
       console.error(err);
     }
   }
   if (HM_DATA) renderHeatmap();
-};
+}
 
-let hmMetric  = 'tasks';
+let hmMetric = 'tasks';
 
 function hmGetLevel(val, metric) {
   if (val === 0) return 0;
@@ -105,8 +101,8 @@ function renderHeatmap() {
   const stats   = hmComputeStats(hmMetric);
 
   // Stats UI
-  document.getElementById('hmStatTotal').textContent = isTasks ? stats.total + '' : stats.total + 'h';
-  document.getElementById('hmStatTotal').className   = 'hm-stat-val ' + (isTasks ? 'tasks-col' : 'focus-col');
+  document.getElementById('hmStatTotal').textContent    = isTasks ? stats.total + '' : stats.total + 'h';
+  document.getElementById('hmStatTotal').className      = 'hm-stat-val ' + (isTasks ? 'tasks-col' : 'focus-col');
   document.getElementById('hmStatTotalLbl').textContent = isTasks ? 'Total tasks' : 'Total hours';
   document.getElementById('hmStatLongest').textContent  = stats.longestStreak + ' days';
   document.getElementById('hmStatLongest').className    = 'hm-stat-val ' + (isTasks ? 'tasks-col' : 'focus-col');
@@ -130,29 +126,17 @@ function renderHeatmap() {
     if (el) el.style.background = levels[i];
   }
 
-  // Build grid
-  const grid     = document.getElementById('hmGrid');
-  const monthRow = document.getElementById('hmMonthRow');
-  grid.innerHTML = monthRow.innerHTML = '';
+  // Build grid — ĐÃ XÓA: monthRow logic
+  const grid = document.getElementById('hmGrid');
+  grid.innerHTML = '';
 
-  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const COL_W  = 15;
-  let lastMonth = -1;
   const cur = new Date(start);
 
   while (cur <= today) {
     const col = document.createElement('div');
     col.className = 'heatmap-col';
 
-    const mLabel = document.createElement('div');
-    mLabel.className = 'month-label';
-    mLabel.style.width    = COL_W + 'px';
-    mLabel.style.minWidth = COL_W + 'px';
-    if (cur.getMonth() !== lastMonth) {
-      mLabel.textContent = MONTHS[cur.getMonth()];
-      lastMonth = cur.getMonth();
-    }
-    monthRow.appendChild(mLabel);
+    // ĐÃ XÓA: mLabel / monthRow.appendChild(mLabel)
 
     for (let dow = 0; dow < 7; dow++) {
       const cell = document.createElement('div');
@@ -183,8 +167,8 @@ function renderHeatmap() {
   // Stagger animation
   const cells = grid.querySelectorAll('.cell');
   cells.forEach((c, i) => {
-    c.style.opacity   = '0';
-    c.style.transform = 'scale(0.6)';
+    c.style.opacity    = '0';
+    c.style.transform  = 'scale(0.6)';
     c.style.transition = `opacity 0.3s ease ${i * 1.2}ms, transform 0.3s ease ${i * 1.2}ms`;
     requestAnimationFrame(() => requestAnimationFrame(() => {
       c.style.opacity   = '1';
@@ -218,16 +202,16 @@ function hmShowTooltip(e, key, val) {
     ttVal.className   = 'hm-tt-val ' + (isTasks ? 'tasks-col' : 'focus-col');
     const other = isTasks ? HM_DATA.focus[key] : HM_DATA.tasks[key];
     ttSub.textContent = isTasks
-      ? (other ? `${other}h focused`    : 'No focus time')
-      : (other ? `${other} tasks`       : 'No tasks');
+      ? (other ? `${other}h focused` : 'No focus time')
+      : (other ? `${other} tasks`    : 'No tasks');
   }
 
   tip.classList.add('show');
   hmPositionTooltip(e.clientX, e.clientY);
 }
 
-function hmMoveTooltip(e)  { hmPositionTooltip(e.clientX, e.clientY); }
-function hmHideTooltip()   { document.getElementById('hmTooltip').classList.remove('show'); }
+function hmMoveTooltip(e) { hmPositionTooltip(e.clientX, e.clientY); }
+function hmHideTooltip()  { document.getElementById('hmTooltip').classList.remove('show'); }
 
 function hmPositionTooltip(x, y) {
   const tip = document.getElementById('hmTooltip');
