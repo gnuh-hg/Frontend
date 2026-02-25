@@ -78,12 +78,7 @@ function lcYp(v, yMax)  { return LC_PT + LC_PH - (v / yMax) * LC_PH; }
 
 function lcCurvePath(pts) {
   if (!pts.length) return '';
-  let d = `M${pts[0].x},${pts[0].y}`;
-  for (let i = 1; i < pts.length; i++) {
-    const cx = (pts[i-1].x + pts[i].x) / 2;
-    d += ` C${cx},${pts[i-1].y} ${cx},${pts[i].y} ${pts[i].x},${pts[i].y}`;
-  }
-  return d;
+  return pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ');
 }
 
 function lcAnimateLine(pathEl) {
@@ -136,9 +131,7 @@ function renderLineChart() {
   for (let i = 0; i <= LC_STEPS; i++) {
     const div = document.createElement('div');
     div.className = 'y-label-left';
-    div.textContent = Number.isInteger((ymF / LC_STEPS) * i)
-  ? ((ymF / LC_STEPS) * i) + 'h'
-  : ((ymF / LC_STEPS) * i).toFixed(1) + 'h';
+    div.textContent = Math.round((ymT / LC_STEPS) * i);
     yL.appendChild(div);
   }
 
@@ -148,7 +141,9 @@ function renderLineChart() {
   for (let i = 0; i <= LC_STEPS; i++) {
     const div = document.createElement('div');
     div.className = 'y-label-right';
-    div.textContent = ((ymF / LC_STEPS) * i).toFixed(1) + 'h';
+    div.textContent = Number.isInteger((ymF / LC_STEPS) * i)
+  ? ((ymF / LC_STEPS) * i) + 'h'
+  : ((ymF / LC_STEPS) * i).toFixed(1) + 'h';
     yR.appendChild(div);
   }
 
