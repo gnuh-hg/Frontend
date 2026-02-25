@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const response = await Config.fetchWithAuth(`${Config.URL_API}/project/${projectId}/items`);
             if (!response.ok) {
-                Config.showWarning("Không thể tải dữ liệu");
+                Config.showWarning("Unable to load data");
                 return;
             }
             document.querySelectorAll('.task').forEach(el => el.remove());
@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 items.forEach(item => renderItem(item));
             }
         } catch (err) {
-            Config.showWarning("Lỗi khi load dữ liệu");
+            Config.showWarning("Unable to load data");
         }
     }
 
@@ -197,10 +197,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (container.querySelectorAll('.task').length === 0) 
                             showEmptyState('noTask');
                     } else {
-                        Config.showWarning('Lỗi khi xóa task');
+                        Config.showWarning('Error while deleting task');
                     }
                 } catch (err) {
-                    Config.showWarning('Lỗi khi xóa task');
+                    Config.showWarning('Error while deleting task');
                 }
             }, 400);
         });
@@ -263,7 +263,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let cnt = 0;
     container.querySelector('h1 button').addEventListener('click', async (e) => {
         if (!projectId && !Config.TEST) {
-            Config.showWarning('Vui lòng chọn project trước!');
+            Config.showWarning('Please select a project first!');
             return;
         }
 
@@ -293,10 +293,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 renderItem(item);
             } else {
                 const errorData = await response.json();
-                Config.showWarning(`Không thể tạo mục mới: ${errorData.detail || 'Lỗi không xác định'}`);
+                Config.showWarning(`Error creating task`);
             }
         } catch (err) {
-            Config.showWarning('Lỗi khi tạo task');
+            Config.showWarning('Error creating task');
         }
     });
 
@@ -622,9 +622,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Khởi tạo
     const taskDatePicker = new TaskDatePicker();
 
-    // ========== TIMER ==========
-
-
     // ========== NOTES ==========
     const notesTextarea = document.querySelector('.notes-textarea');
     let notesDebounceTimer = null;
@@ -643,7 +640,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 Config.fetchWithAuth(`${Config.URL_API}/project/${projectId}/items/${activeData.id}`, {
                     method: 'PATCH',
                     body: JSON.stringify({ notes: newNotes })
-                }).catch(() => Config.showWarning("Không thể lưu ghi chú"));
+                }).catch(() => Config.showWarning("Unable to save notes"));
             }, 500);
         });
     }
@@ -675,9 +672,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (container.querySelectorAll('.task').length === 0) 
                         showEmptyState('noTask');
                     if (panel) panel.classList.remove('active');
-                } else Config.showWarning('Lỗi khi xóa task');
+                } else Config.showWarning('Error while deleting task');
             } catch (err) {
-                Config.showWarning('Lỗi khi xóa task');
+                Config.showWarning('Error while deleting task');
             }
         });
     }
@@ -703,7 +700,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const err = await res.json();
             console.error('[REORDER]', res.status, err);
         }
-    }).catch(() => Config.showWarning("Không thể cập nhật vị trí"));
+    }).catch(() => Config.showWarning("Unable to update location"));
         }, 500);
     }
     

@@ -33,7 +33,7 @@ async function initHeatmap() {
       const res = await Config.fetchWithAuth(`${Config.URL_API}/statistic/heatmap`);
       if (!res.ok) throw new Error(res.status);
       HM_DATA = await res.json();
-      console.log(HM_DATA);
+      console.log('heatmap', HM_DATA);
     } catch (err) {
       console.error(err);
     }

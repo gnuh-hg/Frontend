@@ -221,7 +221,7 @@ document.addEventListener('DOMContentLoaded', function() {
             passwordHeader.classList.remove('active');
         } catch (error) {
             console.error('Error changing password:', error);
-            Config.showWarning(error.message || 'Failed to change password');
+            Config.showWarning('Failed to change password');
         }
     });
 

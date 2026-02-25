@@ -35,7 +35,7 @@ window.Config = {
                         animation: config-spin 0.8s linear infinite; flex-shrink: 0;
                     "></div>
                     <span style="font-size: 13px; font-weight: 500; color: #9494a0;">
-                        Đang kết nối...
+                        Connecting...
                     </span>
                 </div>
             `;

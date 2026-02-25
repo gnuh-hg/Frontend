@@ -159,9 +159,9 @@ document.addEventListener('DOMContentLoaded', async function () {
                 method: 'PATCH',
                 body: JSON.stringify(body),
             });
-            if (!res.ok) Config.showWarning('PATCH settings failed:', res.status);
+            if (!res.ok) Config.showWarning('PATCH settings failed');
         } catch (err) {
-            if (err.message !== 'Unauthorized') Config.showWarning('PATCH settings error:', err);
+            if (err.message !== 'Unauthorized') Config.showWarning('PATCH settings error');
         }
     }
     
@@ -193,7 +193,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             const data = await res.json();
             applySettingsToUI(data);
         } catch (err) {
-            if (err.message !== 'Unauthorized') Config.showWarning('loadSettings error:', err);
+            if (err.message !== 'Unauthorized') Config.showWarning('Load settings error');
         }
     }
 
@@ -213,7 +213,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             if (!res.ok) return;
             tasks = await res.json();
         } catch (err) {
-            if (err.message !== 'Unauthorized') Config.showWarning('loadTasks error:', err);
+            if (err.message !== 'Unauthorized') Config.showWarning('Load tasks error');
         }
     }
 
@@ -234,9 +234,9 @@ document.addEventListener('DOMContentLoaded', async function () {
                 method: 'POST',
                 body: JSON.stringify(body),
             });
-            if (!res.ok) Config.showWarning('POST session failed:', res.status);
+            if (!res.ok) Config.showWarning('POST session failed');
         } catch (err) {
-            if (err.message !== 'Unauthorized') Config.showWarning('POST session error:', err);
+            if (err.message !== 'Unauthorized') Config.showWarning('POST session error');
         }
     }
 

@@ -30,7 +30,7 @@ async function initLineChart() {
       );
       if (!res.ok) throw new Error(res.status);
       LC_DATASETS = await res.json();
-      console.log(LC_DATASETS);
+      console.log('line chart', LC_DATASETS);
     } catch (err) {
       console.error(err);
     }

@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const response = await Config.fetchWithAuth(`${Config.URL_API}/items`);
             
             if (!response.ok) {
-                console.error("Không thể tải dữ liệu");
+                console.error("Unable to load data");
                 return;
             }
             
@@ -102,8 +102,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
                 
                 if (!response.ok) {
-                    Config.showWarning('Lỗi khi lưu cấu trúc');
-                    console.error("Lỗi khi lưu cấu trúc");
+                    Config.showWarning('Error saving structure');
+                    console.error("Error saving structure");
                 }
             } catch (err) { 
                 console.error("Lỗi lưu cấu trúc:", err); 
@@ -183,8 +183,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                     
                     if (!response.ok) {
-                        Config.showWarning("Không thể cập nhật trạng thái folder");
-                        console.error("Không thể cập nhật trạng thái folder");
+                        Config.showWarning("Unable to update folder status");
+                        console.error("Unable to update folder status");
                     }
                 } catch (err) {
                     console.error("Lỗi khi toggle folder:", err);
@@ -303,7 +303,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (!name) {
             input.focus();
-            Config.showWarning("Vui lòng nhập tên!");
+            Config.showWarning("Please enter your name!");
             return;
         }
 
@@ -340,7 +340,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 closeModals();
             } else {
                 const errorData = await res.json();
-                Config.showWarning(`Không thể tạo mục mới: ${errorData.detail || 'Lỗi không xác định'}`);
+                Config.showWarning(`Unable to create a new item`);
             }
         } catch (err) {
             console.error("Lỗi khi tạo item:", err);
@@ -366,7 +366,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (!newName) {
             modalMoreBox.querySelector('.modal-input').focus();
-            Config.showWarning("Vui lòng nhập tên!");
+            Config.showWarning("Please enter your name!");
             return;
         }
 
@@ -390,7 +390,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (iconPath) iconPath.setAttribute('fill', newColor);
                 closeModals();
             } else {
-                Config.showWarning("Không thể cập nhật");
+                Config.showWarning("Unable to update");
             }
         } catch (err) {
             console.error("Lỗi khi sửa item:", err);

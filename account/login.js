@@ -57,9 +57,7 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
 
         // Prevent double submission
-        if (login_btn.classList.contains('loading')) {
-            return;
-        }
+        if (login_btn.classList.contains('loading')) return;
 
         const email = email_input.value.trim();
         const password = password_input.value.trim();
