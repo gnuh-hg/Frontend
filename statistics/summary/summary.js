@@ -96,7 +96,7 @@ function renderSummary() {
   const totTasks = d.tasks.reduce((a,b)=>a+b,0);
   const totFocus = Math.round(d.focus.reduce((a,b)=>a+b,0) * 10) / 10;
   const totPomo  = d.pomo.reduce((a,b)=>a+b,0);
-  const rate     = Math.round((d.done / d.created) * 100);
+  const rate     = d.created ? Math.round((d.done / d.created) * 100) : 0;
 
   document.getElementById('sumValTasks').innerHTML = totTasks;
   applyDelta('sumDeltaTasks', totTasks, d.prevTasks);
