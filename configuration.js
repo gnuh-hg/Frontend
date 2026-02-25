@@ -1,7 +1,7 @@
 /* ── configuration.js ── */
 window.Config = {
     URL_API: "https://backend-u1p2.onrender.com",
-    TEST: true,
+    TEST: false,
     _lastWarningTime: 0,
     _loadingCount: 0, // đếm số request đang chạy
 
