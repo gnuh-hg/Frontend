@@ -86,6 +86,7 @@ window.Config = {
         }
     },
 
+    // --- FETCH WITH AUTH ---
     async fetchWithAuth(url, options = {}, retries = 4) {
         const token = localStorage.getItem('access_token');
         const defaultHeaders = {
@@ -93,7 +94,7 @@ window.Config = {
             'Content-Type': 'application/json'
         };
 
-        this.showLoading();
+        this.showLoading(); // ← hiện loading
 
         for (let i = 0; i < retries; i++) {
             const controller = new AbortController();
@@ -106,26 +107,17 @@ window.Config = {
                     headers: { ...defaultHeaders, ...options.headers },
                     signal: controller.signal
                 });
-
                 clearTimeout(timer);
-
+                this.hideLoading(); // ← ẩn loading khi thành công
                 if (response.status === 401) {
-                    this.hideLoading();
                     localStorage.removeItem('access_token');
                     window.location.href = "/account/login.html";
-                    return response;
+                    throw new Error("Unauthorized");
                 }
-
-                if (!response.ok && i < retries - 1) {
-                    throw new Error(`Server_Error_${response.status}`);
-                }
-
-                this.hideLoading();
                 return response;
-
             } catch (error) {
                 clearTimeout(timer);
-
+                if (error.message === "Unauthorized") throw error;
                 if (i === retries - 1) {
                     this.hideLoading(); // ← ẩn loading khi hết retry
                     this.showWarning("Connection error");
@@ -133,9 +125,8 @@ window.Config = {
                     window.location.href = "/account/login.html";
                     throw error;
                 }
-
                 const delay = 1000 * Math.pow(2, i);
-                console.warn(`Lỗi: ${error.message}. Thử lại ${i + 1}/${retries} sau ${delay / 1000}s...`);
+                console.warn(`Retry ${i + 1}/${retries} sau ${delay / 1000}s...`);
                 await new Promise(resolve => setTimeout(resolve, delay));
             }
         }
