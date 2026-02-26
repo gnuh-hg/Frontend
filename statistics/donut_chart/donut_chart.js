@@ -109,6 +109,8 @@ let donutMetric = 'tasks';
 let donutCircles  = [];
 let donutLegItems = [];
 
+setDonutPeriod(donutPeriod, document.querySelector('.donut-period-tab'));
+
 function setDonutPeriod(p, btn) {
   donutPeriod = p;
   document.querySelectorAll('.donut-period-tab').forEach(b => b.classList.remove('active'));

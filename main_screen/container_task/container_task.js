@@ -22,6 +22,32 @@ document.addEventListener('DOMContentLoaded', function() {
         loadData();
     });
 
+    document.addEventListener('projectUpdated', function(e) {
+        const { id, name } = e.detail;
+
+        if (projectId === id) {
+            nameProject = name;
+            container.querySelector('h1 p').innerHTML = name;
+        }
+    });
+
+    document.addEventListener('projectDeleted', function(e) {
+        const { id } = e.detail;
+
+        if (projectId === id) {
+            projectId = null;
+            nameProject = null;
+
+            container.querySelectorAll('.task').forEach(el => el.remove());
+
+            const panel = document.querySelector('.task-detail-panel');
+            if (panel) panel.classList.remove('active');
+
+            container.querySelector('h1').style.display = 'none';
+            showEmptyState('noProject');
+        }
+    });
+
     async function loadData() {
         try {
             const response = await Config.fetchWithAuth(`${Config.URL_API}/project/${projectId}/items`);
@@ -254,7 +280,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             time_spent.innerHTML = `${(data.time_spent / 3600).toFixed(2) } h`;
-            notes.innerHTML = data.notes;
+            notes.value = data.notes ?? '';
         
             panel.classList.add('active');
         });

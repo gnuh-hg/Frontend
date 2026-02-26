@@ -375,6 +375,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 currentSelectedItem.querySelector('p').innerText = newName;
                 const iconPath = currentSelectedItem.querySelector('.folder-icon path') || currentSelectedItem.querySelector('.project-icon circle');
                 if (iconPath) iconPath.setAttribute('fill', newColor);
+
+                if (currentSelectedItem.classList.contains('project-item-child')) {
+                    document.dispatchEvent(new CustomEvent('projectUpdated', {
+                        detail: { id: currentSelectedItem.getAttribute('data-id'), name: newName }
+                    }));
+                }
+
                 closeModals();
                 return;
             }
@@ -388,6 +395,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 currentSelectedItem.querySelector('p').innerText = newName;
                 const iconPath = currentSelectedItem.querySelector('.folder-icon path') || currentSelectedItem.querySelector('.project-icon circle');
                 if (iconPath) iconPath.setAttribute('fill', newColor);
+
+                if (currentSelectedItem.classList.contains('project-item-child')) {
+                    document.dispatchEvent(new CustomEvent('projectUpdated', {
+                        detail: { id: currentSelectedItem.getAttribute('data-id'), name: newName }
+                    }));
+                }
+
                 closeModals();
             } else {
                 Config.showWarning("Unable to update");
@@ -411,6 +425,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
         try {
             if (Config.TEST) {
+                if (currentSelectedItem.classList.contains('project-item-child')) {
+                    document.dispatchEvent(new CustomEvent('projectDeleted', {
+                        detail: { id: currentSelectedItem.getAttribute('data-id') }
+                    }));
+                }
+
                 currentSelectedItem.remove();
                 updateEmptyState();
                 closeModals();
@@ -422,6 +442,12 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             
             if (res.ok) {
+                if (currentSelectedItem.classList.contains('project-item-child')) {
+                    document.dispatchEvent(new CustomEvent('projectDeleted', {
+                        detail: { id: currentSelectedItem.getAttribute('data-id') }
+                    }));
+                }
+
                 currentSelectedItem.remove();
                 updateEmptyState();
                 closeModals();
