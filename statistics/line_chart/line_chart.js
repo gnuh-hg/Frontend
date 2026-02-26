@@ -7,22 +7,22 @@ let LC_DATASETS;
 
 async function initLineChart() {
   if (Config.TEST) LC_DATASETS = {
-    week: {
-      labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
-      tasks:  [5, 14, 8, 18, 11, 3, 7],
-      focus:  [1.5, 6.0, 2.0, 7.5, 3.5, 1.0, 4.0],
-    },
-    month: {
-      labels: ['D.1','D.5','D.10','D.15','D.20','D.25','D.30'],
-      tasks:  [12, 28, 15, 35, 20, 42, 18],
-      focus:  [8.5, 5.0, 12.0, 4.5, 14.0, 6.5, 10.0],
-    },
-    year: {
-      labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
-      tasks:  [38, 72, 51, 88, 64, 110, 79, 95, 58, 120, 83, 140],
-      focus:  [28, 18, 35, 15, 42, 12, 38, 22, 45, 10, 50, 20],
-    },
-  };
+  week: {
+    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+    tasks: [8, 12, 5, 18, 10, 4, 6],
+    focus: [6.5, 9.0, 11.5, 7.0, 8.5, 2.0, 3.5], 
+  },
+  month: {
+    labels: ['D.1', 'D.5', 'D.10', 'D.15', 'D.20', 'D.25', 'D.30'],
+    tasks: [22, 14, 35, 18, 28, 12, 40],
+    focus: [15.5, 19.0, 12.0, 24.5, 18.0, 22.0, 14.5],
+  },
+  year: {
+    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+    tasks: [45, 82, 60, 110, 75, 130, 85, 95, 145, 100, 120, 160],
+    focus: [60, 70, 95, 80, 115, 90, 125, 110, 105, 140, 130, 155],
+  },
+};
   else {
     try {
       const res = await Config.fetchWithAuth(
