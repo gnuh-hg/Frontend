@@ -60,6 +60,14 @@ body {
 .close-btn:hover svg { transform: rotate(90deg); }
 .settings-panel > .close-btn { margin-top: auto; }
 
+.warning-close {
+    color: var(--text-tertiary);
+    font-size: 12px;
+    width: 100%;
+    margin-top: 5px;
+    text-align: center;
+}
+
 /* ===== LAYOUT ===== */
 .pomo-wrapper {
     position: relative;
