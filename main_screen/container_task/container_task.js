@@ -235,7 +235,7 @@ document.addEventListener('DOMContentLoaded', function() {
         item.addEventListener('click', (e) => {
             e.stopPropagation();
             if (!panel) return;
-        
+            console.log(data);
             const name = panel.querySelector('.detail-task-name');
             const priority = panel.querySelector('.priority-badge');
             const priority_text = panel.querySelector('.priority-badge span');
