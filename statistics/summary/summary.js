@@ -94,7 +94,7 @@ function renderSummary() {
   const d = SUMMARY_DATASETS[summaryPeriod];
 
   const totTasks = d.tasks.reduce((a,b)=>a+b,0);
-  const totFocus = Math.round(d.focus.reduce((a,b)=>a+b,0) * 10) / 10;
+  const totFocus = Math.round(d.focus.reduce((a,b)=>a+b,0) * 100) / 100;
   const totPomo  = d.pomo.reduce((a,b)=>a+b,0);
   const rate     = d.created ? Math.round((d.done / d.created) * 100) : 0;
 

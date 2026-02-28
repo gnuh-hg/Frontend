@@ -117,7 +117,7 @@ function renderLineChart() {
 
   // Stats
   document.getElementById('lcTotalTasks').textContent = d.tasks.reduce((a,b)=>a+b,0);
-  document.getElementById('lcTotalFocus').textContent = d.focus.reduce((a,b)=>a+b,0).toFixed(1) + 'h';
+  document.getElementById('lcTotalFocus').textContent = d.focus.reduce((a,b)=>a+b,0).toFixed(2) + 'h';
   ['lcTrendTasks','lcTrendFocus'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
@@ -214,7 +214,7 @@ function lcShowTip(i, d, ptT, rT, rF) {
 
   document.getElementById('lcTtLabel').textContent = d.labels[i];
   document.getElementById('lcTtTasks').textContent = d.tasks[i] + ' tasks';
-  document.getElementById('lcTtFocus').textContent = d.focus[i] + 'h';
+  document.getElementById('lcTtFocus').textContent = Number(d.focus[i]).toFixed(2) + 'h';
 
   const tip  = document.getElementById('lcTooltip');
   tip.classList.add('show');

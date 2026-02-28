@@ -3,17 +3,19 @@ window.Config = {
     URL_API: "https://backend-u1p2.onrender.com",
     TEST: false,
     _lastWarningTime: 0,
-    _loadingCount: 0, // đếm số request đang chạy
+    _loadingCount: 0,
+    _loadingTimer: null,
 
     // --- LOADING ---
     showLoading() {
         this._loadingCount++;
-        if (this._loadingTimer) return; // đang có timer rồi thì thôi
-    
+        if (this._loadingTimer) return; // timer đang chạy → không tạo thêm
+
         this._loadingTimer = setTimeout(() => {
-            if (this._loadingCount === 0) return; // xong rồi thì không hiện
+            this._loadingTimer = null; // ← reset timer sau khi fire
+            if (this._loadingCount === 0) return;
             if (document.querySelector('.config-loading')) return;
-        
+
             const overlay = document.createElement('div');
             overlay.className = 'config-loading';
             overlay.style.cssText = `
@@ -39,30 +41,32 @@ window.Config = {
                     </span>
                 </div>
             `;
-        
+
             if (!document.querySelector('#config-loading-style')) {
                 const style = document.createElement('style');
                 style.id = 'config-loading-style';
                 style.textContent = `@keyframes config-spin { to { transform: rotate(360deg); } }`;
                 document.head.appendChild(style);
             }
-        
+
             document.body.appendChild(overlay);
-        }, 500); // ← chờ 500ms mới hiện
+        }, 500);
     },
-    
+
     hideLoading() {
         this._loadingCount = Math.max(0, this._loadingCount - 1);
         if (this._loadingCount > 0) return;
-    
-        // Hủy timer nếu chưa hiện kịp
-        clearTimeout(this._loadingTimer);
-        this._loadingTimer = null;
-    
+
+        // Hủy timer nếu chưa fire kịp → reset để showLoading có thể tạo timer mới
+        if (this._loadingTimer) {
+            clearTimeout(this._loadingTimer);
+            this._loadingTimer = null; // ← fix bug: phải reset để lần sau showLoading hoạt động
+        }
+
         document.querySelector('.config-loading')?.remove();
     },
 
-    // --- FETCH WITH RETRY ---
+    // --- FETCH WITH RETRY (không cần auth) ---
     async fetchWithRetry(url, options = {}, retries = 4) {
         for (let i = 0; i < retries; i++) {
             const controller = new AbortController();
@@ -88,15 +92,24 @@ window.Config = {
 
     // --- FETCH WITH AUTH ---
     async fetchWithAuth(url, options = {}, retries = 4) {
-        const token = localStorage.getItem('access_token');
-        const defaultHeaders = {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
+        this.showLoading();
+        let didHideLoading = false;
+
+        const safeHideLoading = () => {
+            if (!didHideLoading) {
+                didHideLoading = true; // ← fix bug: đảm bảo chỉ gọi hideLoading đúng 1 lần
+                this.hideLoading();
+            }
         };
 
-        this.showLoading(); // ← hiện loading
-
         for (let i = 0; i < retries; i++) {
+            // fix bug: lấy token mới mỗi lần retry (phòng token refresh giữa chừng)
+            const token = localStorage.getItem('access_token');
+            const defaultHeaders = {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            };
+
             const controller = new AbortController();
             const timeoutMs = i === 0 ? 10000 : 60000;
             const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -108,23 +121,27 @@ window.Config = {
                     signal: controller.signal
                 });
                 clearTimeout(timer);
-                this.hideLoading(); // ← ẩn loading khi thành công
+                safeHideLoading();
+
                 if (response.status === 401) {
                     localStorage.removeItem('access_token');
                     window.location.href = "/account/login.html";
                     throw new Error("Unauthorized");
                 }
+
                 return response;
             } catch (error) {
                 clearTimeout(timer);
                 if (error.message === "Unauthorized") throw error;
+
                 if (i === retries - 1) {
-                    this.hideLoading(); // ← ẩn loading khi hết retry
+                    safeHideLoading();
                     this.showWarning("Connection error");
                     localStorage.removeItem('access_token');
                     window.location.href = "/account/login.html";
                     throw error;
                 }
+
                 const delay = 1000 * Math.pow(2, i);
                 console.warn(`Retry ${i + 1}/${retries} sau ${delay / 1000}s...`);
                 await new Promise(resolve => setTimeout(resolve, delay));

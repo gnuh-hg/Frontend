@@ -67,9 +67,11 @@ function hmGetLevel(val, metric) {
 function hmComputeStats(metric) {
   const vals = Object.values(HM_DATA[metric]);
   const total = metric === 'tasks'
-    ? vals.reduce((a,b)=>a+b,0)
-    : Math.round(vals.reduce((a,b)=>a+b,0) * 10) / 10;
-  const best = Math.max(...vals);
+      ? vals.reduce((a,b)=>a+b,0)
+      : Math.round(vals.reduce((a,b)=>a+b,0) * 100) / 100;
+  const best = metric === 'tasks'
+    ? Math.max(...vals)
+    : Math.round(Math.max(...vals) * 100) / 100;
 
   const today = new Date(); today.setHours(0,0,0,0);
   let currentStreak = 0, longestStreak = 0, run = 0;
