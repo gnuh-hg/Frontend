@@ -79,7 +79,7 @@ window.Config = {
             } catch (error) {
                 clearTimeout(timer);
                 if (i === retries - 1) throw error;
-                const delay = 3000 * Math.pow(2, i);
+                const delay = 2000 * Math.pow(2, i);
                 console.warn(`Retry ${i + 1}/${retries} sau ${delay / 1000}s...`);
                 await new Promise(resolve => setTimeout(resolve, delay));
             }
