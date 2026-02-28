@@ -111,9 +111,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (username.length > 30) {
             return { valid: false, message: "Username must not exceed 30 characters" };
         }
-        if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-            return { valid: false, message: "Username can only contain letters, numbers, and underscores" };
-        }
         return { valid: true };
     }
 
