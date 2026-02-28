@@ -143,7 +143,7 @@ function renderLineChart() {
     div.className = 'y-label-right';
     div.textContent = Number.isInteger((ymF / LC_STEPS) * i)
   ? ((ymF / LC_STEPS) * i) + 'h'
-  : ((ymF / LC_STEPS) * i).toFixed(1) + 'h';
+  : ((ymF / LC_STEPS) * i).toFixed(2) + 'h';
     yR.appendChild(div);
   }
 
@@ -156,7 +156,7 @@ function renderLineChart() {
   }
 
   // Points
-  const ptT = d.tasks.map((v,i) => ({ x: lcXp(i,n,W), y: lcYp(v, ymT) }));
+  const ptT = d.tasks.map((v,i) => ({ x: lcXp(i,n,W), y: lcYp(v, ymT) - 2 }));
   const ptF = d.focus.map((v,i) => ({ x: lcXp(i,n,W), y: lcYp(v, ymF) }));
 
   // Areas

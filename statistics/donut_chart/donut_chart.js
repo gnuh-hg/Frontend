@@ -127,7 +127,7 @@ function setDonutMetric(m, btn) {
 }
 
 function donutFmtVal(v) {
-  return donutMetric === 'focus' ? v.toFixed(1) + 'h' : v + ' tasks';
+  return donutMetric === 'focus' ? v.toFixed(2) + 'h' : v + ' tasks';
 }
 
 function donutSetCenter(num, color) {
@@ -163,7 +163,7 @@ function donutActivate(i, segs) {
   const svg = document.getElementById('donutSvg');
   svg.classList.add('has-hover');
   donutCircles[i].classList.add('hovered');
-  const num = donutMetric === 'focus' ? seg.value.toFixed(1) : seg.value;
+  const num = donutMetric === 'focus' ? seg.value.toFixed(2) : seg.value;
   donutSetCenter(num, seg.color);
   document.getElementById('donutCenterLabel').textContent = seg.isOthers ? 'Others' : seg.name;
   donutLegItems.forEach((el,j) => {
@@ -175,7 +175,7 @@ function donutActivate(i, segs) {
 function donutDeactivate(total) {
   document.getElementById('donutSvg').classList.remove('has-hover');
   donutCircles.forEach(c => c.classList.remove('hovered'));
-  const num = donutMetric === 'focus' ? total.toFixed(1) : total;
+  const num = donutMetric === 'focus' ? total.toFixed(2) : total;
   donutSetCenter(num, '');
   document.getElementById('donutCenterLabel').textContent = 'Total';
   donutLegItems.forEach(el => {
@@ -198,7 +198,7 @@ function renderDonut() {
   document.getElementById('donutFooterValue').textContent = donutFmtVal(total);
   document.getElementById('donutFooterValue').style.color = donutMetric === 'tasks' ? '#818cf8' : 'var(--accent-green)';
 
-  donutSetCenter(donutMetric === 'focus' ? total.toFixed(1) : total, '');
+  donutSetCenter(donutMetric === 'focus' ? total.toFixed(2) : total, '');
   document.getElementById('donutCenterLabel').textContent = 'Total';
 
   donutCircles.forEach(c => c.remove());
