@@ -1543,8 +1543,6 @@ function attachTouchDrag(el) {
 // Backend ephemeral mode: POST /chatbot trả kết quả inline, không lưu DB.
 // ═══════════════════════════════════════════════════════════════════════════
 
-let _aiBackupState = null;
-let _aiPreviewMode = false;
 let _aiSending     = false;
 let _aiStatusTimer = null;
 
@@ -1624,9 +1622,6 @@ function setupAiBar() {
         if (e.key === 'Escape') togglePanel(false);
     });
 
-    document.getElementById('ai-preview-save')?.addEventListener('click', _commitPreview);
-    document.getElementById('ai-preview-cancel')?.addEventListener('click', _cancelPreview);
-
     document.addEventListener('click', e => {
         if (panel.style.display !== 'flex') return;
         if (!panel.contains(e.target) && !aiBtn?.contains(e.target) && !mobAiBtn?.contains(e.target)) {
@@ -1638,19 +1633,15 @@ function setupAiBar() {
 // ── SEND ───────────────────────────────────────────────────────────────────
 
 async function _handleAiSend() {
-    if (_aiPreviewMode) {
-        _setAiStatus('warn', t('roadmap.ai_busy'), 3000);
-        return;
-    }
     if (_aiSending) return;
 
-    const input = document.getElementById('ai-chat-input');
+    const input   = document.getElementById('ai-chat-input');
     const sendBtn = document.getElementById('ai-chat-send');
-    const text  = input?.value.trim();
+    const text    = input?.value.trim();
     if (!text) return;
 
-    input.value   = '';
-    _aiSending    = true;
+    input.value      = '';
+    _aiSending       = true;
     if (sendBtn) sendBtn.disabled = true;
     _setAiStatus('loading', t('roadmap.ai_thinking') || 'AI đang xử lý…');
 
@@ -1670,12 +1661,29 @@ async function _handleAiSend() {
 
         const aiData = await postRes.json();
 
-        if (aiData.type === 'roadmap_update' && aiData.data?.diff) {
+        if (aiData.type === 'roadmap' && aiData.data) {
+            _setAiStatus('loading', t('roadmap.saving') || 'Đang lưu…');
+            const saveRes = await _aiFetch(`${API}/chatbot/save/roadmap`, {
+                method: 'POST',
+                body:   JSON.stringify(aiData.data),
+            });
+            if (!saveRes.ok) {
+                const err = await saveRes.json().catch(() => ({}));
+                throw new Error(err.detail || 'save_failed');
+            }
+            const savedRm = await saveRes.json();
+            roadmaps.push(savedRm);
+            renderRoadmapList();
+            await switchRoadmap(savedRm.id);
+            _setAiStatus('info', '✓ ' + (t('roadmap.ai_save_ok') || 'Đã lưu roadmap mới'), 4000);
+
+        } else if (aiData.type === 'roadmap_update' && aiData.data?.diff) {
             _applyDiff(aiData.data.diff);
             _setAiStatus('loading', t('roadmap.saving') || 'Đang lưu…');
-            await _syncAddedNodesToItems(aiData.data.diff.add_nodes);
+            if (!activeRmId) await newRoadmap();
             await flushSave();
             _setAiStatus('info', '✓ ' + (t('roadmap.ai_save_ok') || 'Đã lưu thay đổi'), 4000);
+
         } else {
             _setAiStatus('info', aiData.message || '✅', 5000);
         }
@@ -1715,56 +1723,6 @@ function _buildRoadmapContext() {
         nodes_summary: nodesSummary,
         edges_summary: edges.map(e => `${e.from}→${e.to}`)
     };
-}
-
-// ── PREVIEW MODE ───────────────────────────────────────────────────────────
-
-function _enterPreviewMode(diff) {
-    _aiBackupState = {
-        nodes: JSON.parse(JSON.stringify(nodes)),
-        edges: JSON.parse(JSON.stringify(edges)),
-        nCnt
-    };
-
-    _applyDiff(diff);
-
-    _aiPreviewMode = true;
-    document.getElementById('ai-preview-banner').style.display = 'flex';
-    cw.classList.add('ai-preview-locked');
-}
-
-function _cancelPreview() {
-    if (!_aiBackupState) return;
-
-    nodes = _aiBackupState.nodes;
-    edges = _aiBackupState.edges;
-    nCnt  = _aiBackupState.nCnt;
-    _aiBackupState = null;
-
-    cnv.innerHTML = '';
-    Object.entries(nodes).forEach(([nid, nd]) => rebuildNode(nid, nd));
-    renderEdges();
-    updateEmpty();
-
-    _exitPreviewMode();
-    _setAiStatus('info', '↩ Đã hủy — roadmap được khôi phục.', 4000);
-}
-
-async function _commitPreview() {
-    _exitPreviewMode();
-    _aiBackupState = null;
-    try {
-        await flushSave();
-        _setAiStatus('info', '✓ ' + (t('roadmap.ai_save_ok') || 'Đã lưu'), 4000);
-    } catch {
-        _setAiStatus('error', '⚠ ' + (t('roadmap.ai_save_fail') || 'Lưu thất bại'), 5000);
-    }
-}
-
-function _exitPreviewMode() {
-    _aiPreviewMode = false;
-    document.getElementById('ai-preview-banner').style.display = 'none';
-    cw.classList.remove('ai-preview-locked');
 }
 
 // ── APPLY DIFF ─────────────────────────────────────────────────────────────
@@ -1826,55 +1784,6 @@ function _applyDiff(diff) {
     renderEdges();
     updateEmpty();
 }
-
-// ── SYNC NEW NODES → WORKSPACE ITEMS ──────────────────────────────────────
-// Tạo real FOLDER/PROJECT items cho các node mới AI thêm vào roadmap,
-// cập nhật item.id bằng UUID thật để roadmap lưu đúng reference.
-async function _syncAddedNodesToItems(addNodes) {
-    if (!addNodes) return;
-    const entries = Object.entries(addNodes);
-    if (!entries.length) return;
-
-    const idMap = {};
-
-    // FOLDERs trước để PROJECT có thể dùng parent_id đúng
-    const ordered = [
-        ...entries.filter(([, nd]) => nd?.item?.type === 'FOLDER'),
-        ...entries.filter(([, nd]) => nd?.item?.type === 'PROJECT'),
-    ];
-
-    for (const [nkey, nd] of ordered) {
-        const item = nd.item;
-        if (!item || !['FOLDER', 'PROJECT'].includes(item.type)) continue;
-
-        const realParentId = idMap[item.parent_id] ?? item.parent_id ?? null;
-        const res = await utils.fetchWithAuth(`${API}/items`, {
-            method: 'POST',
-            body: JSON.stringify({
-                name:      item.name,
-                type:      item.type,
-                parent_id: realParentId,
-                position:  0,
-                color:     item.color || '#a0aec0',
-                expanded:  false
-            })
-        });
-        if (!res.ok) throw new Error(`${item.type} "${item.name}" tạo thất bại`);
-        const created = await res.json();
-
-        idMap[item.id] = created.id;
-        idMap[nkey]    = created.id;
-        if (nodes[nkey]) nodes[nkey].item.id = created.id;
-    }
-
-    // Cập nhật parent_id trong toàn bộ canvas sang UUID thật
-    Object.values(nodes).forEach(nd => {
-        if (nd.item?.parent_id && idMap[nd.item.parent_id]) {
-            nd.item.parent_id = idMap[nd.item.parent_id];
-        }
-    });
-}
-
 
 // UTILS
 // ═══════════════════════════════════════════════════════════════════════════
