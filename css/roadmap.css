@@ -838,6 +838,136 @@ input  { font-family: inherit; }
     color: #ef4444;
 }
 
+.mt-btn--ai { color: var(--accent-primary); }
+.mt-btn--ai:hover {
+    background: rgba(99, 102, 241, 0.12);
+    color: #a5b4fc;
+}
+.mt-btn--ai.active {
+    background: rgba(99, 102, 241, 0.18);
+    color: #a5b4fc;
+    border: 1px solid rgba(99, 102, 241, 0.4);
+}
+
+/* ── AI Chat Panel ───────────────────────────────────────────────────────── */
+#ai-chat-panel {
+    display: none;
+    flex-direction: column;
+    position: absolute;
+    bottom: 106px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 360px;
+    background: rgba(22, 22, 28, 0.97);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: 16px;
+    overflow: hidden;
+    z-index: 20;
+    box-shadow: 0 0 0 1px rgba(99,102,241,0.08), var(--shadow-lg);
+    animation: ai-panel-in 0.18s ease both;
+}
+@keyframes ai-panel-in {
+    from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+#ai-chat-input-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+}
+.ai-chat-icon {
+    width: 14px; height: 14px;
+    flex-shrink: 0;
+    color: var(--accent-primary);
+    opacity: 0.6;
+}
+#ai-chat-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-primary);
+    font-size: 13px;
+    font-family: inherit;
+    min-width: 0;
+}
+#ai-chat-input::placeholder { color: var(--text-tertiary); }
+#ai-chat-send {
+    display: flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px;
+    border-radius: 50%; border: none;
+    background: var(--accent-primary); color: #fff;
+    cursor: pointer; flex-shrink: 0;
+    transition: background 0.15s, transform 0.1s;
+}
+#ai-chat-send:hover   { background: #818cf8; }
+#ai-chat-send:active  { transform: scale(0.92); }
+#ai-chat-send:disabled { opacity: 0.45; cursor: not-allowed; }
+#ai-chat-send svg     { width: 12px; height: 12px; }
+
+/* Status line — hiện dưới input, tự ẩn sau vài giây */
+#ai-chat-status {
+    font-size: 12px;
+    line-height: 1.4;
+    padding: 4px 12px 8px;
+    word-break: break-word;
+}
+.ai-status--loading {
+    color: var(--text-tertiary);
+    animation: ai-status-pulse 1.4s ease infinite;
+}
+@keyframes ai-status-pulse {
+    0%,100% { opacity: 0.5; }
+    50%     { opacity: 1;   }
+}
+.ai-status--info    { color: var(--text-secondary); }
+.ai-status--warn    { color: #f59e0b; }
+.ai-status--error   { color: #f87171; }
+
+/* ── AI Preview Banner ───────────────────────────────────────────────────── */
+#ai-preview-banner {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(22, 22, 28, 0.97);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(99, 102, 241, 0.4);
+    border-radius: 20px;
+    padding: 6px 8px 6px 16px;
+    z-index: 30;
+    box-shadow: 0 0 0 1px rgba(99,102,241,0.12), var(--shadow-lg);
+    font-size: 13px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+.ai-preview-actions { display: flex; gap: 6px; }
+.ai-preview-btn {
+    padding: 4px 12px; border-radius: 12px; border: 1px solid transparent;
+    font-size: 12px; font-weight: 500; cursor: pointer;
+    transition: all 0.15s;
+}
+.ai-preview-btn--cancel {
+    background: transparent;
+    border-color: var(--border-light);
+    color: var(--text-secondary);
+}
+.ai-preview-btn--cancel:hover { background: var(--bg-hover); color: var(--text-primary); }
+.ai-preview-btn--save {
+    background: var(--accent-primary);
+    color: #fff;
+}
+.ai-preview-btn--save:hover { background: #818cf8; }
+
+#cw.ai-preview-locked { pointer-events: none; }
+#cw.ai-preview-locked #ai-preview-banner,
+#cw.ai-preview-locked #ai-chat-panel { pointer-events: auto; }
+
 .mt-sep {
     width: 1px;
     height: 16px;
@@ -1357,6 +1487,32 @@ input  { font-family: inherit; }
         background: rgba(99, 102, 241, 0.15);
         border-color: rgba(99, 102, 241, 0.5);
         color: #a5b4fc;
+    }
+
+    /* Panel chat mobile: fixed, full-width phía trên bottom bar */
+    #ai-chat-panel {
+        position: fixed;
+        bottom: 60px;
+        left: 8px;
+        right: 8px;
+        width: auto;
+        transform: none;
+        animation: ai-panel-in-mobile 0.18s ease both;
+    }
+    @keyframes ai-panel-in-mobile {
+        from { opacity: 0; transform: translateY(8px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    /* Preview banner mobile: full-width */
+    #ai-preview-banner {
+        top: auto;
+        bottom: 60px;
+        left: 8px;
+        right: 8px;
+        width: auto;
+        transform: none;
+        flex-wrap: wrap;
+        white-space: normal;
     }
 
 }

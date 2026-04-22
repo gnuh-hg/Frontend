@@ -1179,6 +1179,7 @@ function setupEventListeners() {
 function setupMiniToolbar() {
 document.getElementById('mt-zoom-reset').addEventListener('click', zoomReset);
     document.getElementById('mt-clear').addEventListener('click', clearAll);
+    setupAiBar();
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1537,6 +1538,344 @@ function attachTouchDrag(el) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════
+// AI BAR — Contextual AI trực tiếp trên canvas Roadmap
+// Backend ephemeral mode: POST /chatbot trả kết quả inline, không lưu DB.
+// ═══════════════════════════════════════════════════════════════════════════
+
+let _aiBackupState = null;
+let _aiPreviewMode = false;
+let _aiSending     = false;
+let _aiStatusTimer = null;
+
+// Fetch riêng cho AI — không dùng fetchWithAuth vì nó giới hạn 10s,
+// AI backend cần tới 60–180s để phản hồi.
+async function _aiFetch(url, options = {}, timeoutMs = 180000) {
+    const token      = localStorage.getItem('access_token');
+    const controller = new AbortController();
+    const timeoutId  = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+        const res = await fetch(url, {
+            ...options,
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+                ...options.headers,
+            },
+            signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+        if (res.status === 401) {
+            localStorage.removeItem('access_token');
+            window.location.href = '/pages/auth.html';
+            throw new Error('Unauthorized');
+        }
+        return res;
+    } catch (err) {
+        clearTimeout(timeoutId);
+        if (err.name === 'AbortError') throw new Error('AI timeout');
+        throw err;
+    }
+}
+
+// ── STATUS LINE ────────────────────────────────────────────────────────────
+
+function _setAiStatus(type, text, autoDismissMs = 0) {
+    const el = document.getElementById('ai-chat-status');
+    if (!el) return;
+    clearTimeout(_aiStatusTimer);
+    el.className = `ai-status ai-status--${type}`;
+    el.textContent = text;
+    el.hidden = false;
+    if (autoDismissMs > 0) {
+        _aiStatusTimer = setTimeout(() => { el.hidden = true; el.textContent = ''; }, autoDismissMs);
+    }
+}
+
+function _clearAiStatus() {
+    const el = document.getElementById('ai-chat-status');
+    if (el) { el.hidden = true; el.textContent = ''; }
+    clearTimeout(_aiStatusTimer);
+}
+
+// ── SETUP ──────────────────────────────────────────────────────────────────
+
+function setupAiBar() {
+    const aiBtn    = document.getElementById('mt-ai');
+    const panel    = document.getElementById('ai-chat-panel');
+    const mobAiBtn = document.getElementById('mob-btn-ai');
+    const input    = document.getElementById('ai-chat-input');
+
+    function togglePanel(open) {
+        const isOpen = open ?? (panel.style.display !== 'flex');
+        panel.style.display = isOpen ? 'flex' : 'none';
+        aiBtn?.setAttribute('aria-pressed', String(isOpen));
+        aiBtn?.classList.toggle('active', isOpen);
+        mobAiBtn?.classList.toggle('active', isOpen);
+        if (isOpen) input?.focus();
+    }
+
+    aiBtn?.addEventListener('click', () => togglePanel());
+    mobAiBtn?.addEventListener('click', () => togglePanel());
+
+    document.getElementById('ai-chat-send')?.addEventListener('click', _handleAiSend);
+    input?.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); _handleAiSend(); }
+        if (e.key === 'Escape') togglePanel(false);
+    });
+
+    document.getElementById('ai-preview-save')?.addEventListener('click', _commitPreview);
+    document.getElementById('ai-preview-cancel')?.addEventListener('click', _cancelPreview);
+
+    document.addEventListener('click', e => {
+        if (panel.style.display !== 'flex') return;
+        if (!panel.contains(e.target) && !aiBtn?.contains(e.target) && !mobAiBtn?.contains(e.target)) {
+            togglePanel(false);
+        }
+    });
+}
+
+// ── SEND ───────────────────────────────────────────────────────────────────
+
+async function _handleAiSend() {
+    if (_aiPreviewMode) {
+        _setAiStatus('warn', t('roadmap.ai_busy'), 3000);
+        return;
+    }
+    if (_aiSending) return;
+
+    const input = document.getElementById('ai-chat-input');
+    const sendBtn = document.getElementById('ai-chat-send');
+    const text  = input?.value.trim();
+    if (!text) return;
+
+    input.value   = '';
+    _aiSending    = true;
+    if (sendBtn) sendBtn.disabled = true;
+    _setAiStatus('loading', t('roadmap.ai_thinking') || 'AI đang xử lý…');
+
+    try {
+        const ctx     = _buildRoadmapContext();
+        const fullMsg = `[ROADMAP_CONTEXT]${JSON.stringify(ctx)}[/ROADMAP_CONTEXT]\n${text}`;
+
+        const postRes = await _aiFetch(`${API}/chatbot`, {
+            method: 'POST',
+            body:   JSON.stringify({ message: fullMsg, source: 'roadmap' }),
+        });
+
+        if (!postRes.ok) {
+            const err = await postRes.json().catch(() => ({}));
+            throw new Error(err.detail || 'post_failed');
+        }
+
+        const aiData = await postRes.json();
+
+        if (aiData.type === 'roadmap_update' && aiData.data?.diff) {
+            _applyDiff(aiData.data.diff);
+            _setAiStatus('loading', t('roadmap.saving') || 'Đang lưu…');
+            await _syncAddedNodesToItems(aiData.data.diff.add_nodes);
+            await flushSave();
+            _setAiStatus('info', '✓ ' + (t('roadmap.ai_save_ok') || 'Đã lưu thay đổi'), 4000);
+        } else {
+            _setAiStatus('info', aiData.message || '✅', 5000);
+        }
+
+    } catch (err) {
+        const msg = err.message === 'AI timeout'
+            ? (t('roadmap.ai_thinking') || 'AI đang xử lý') + ' — thử lại sau'
+            : t('roadmap.ai_error') || 'Lỗi. Thử lại sau.';
+        _setAiStatus('error', '✗ ' + msg, 6000);
+        console.error('[AI Bar]', err);
+    } finally {
+        _aiSending = false;
+        if (sendBtn) sendBtn.disabled = false;
+    }
+}
+
+// ── BUILD CONTEXT ─────────────────────────────────────────────────────────
+
+function _buildRoadmapContext() {
+    const rm = roadmaps.find(r => r.id === activeRmId);
+
+    const nodesSummary = Object.entries(nodes).map(([key, nd]) => {
+        const item  = nd.item;
+        const entry = { key, name: item.name, type: item.type };
+        if (item.parent_id) {
+            const parentKey = Object.entries(nodes)
+                .find(([, n]) => n.item.id === item.parent_id)?.[0];
+            if (parentKey) entry.parent = parentKey;
+        }
+        return entry;
+    });
+
+    return {
+        id:            activeRmId,
+        name:          rm?.name || 'Roadmap',
+        nCnt:          nCnt,
+        nodes_summary: nodesSummary,
+        edges_summary: edges.map(e => `${e.from}→${e.to}`)
+    };
+}
+
+// ── PREVIEW MODE ───────────────────────────────────────────────────────────
+
+function _enterPreviewMode(diff) {
+    _aiBackupState = {
+        nodes: JSON.parse(JSON.stringify(nodes)),
+        edges: JSON.parse(JSON.stringify(edges)),
+        nCnt
+    };
+
+    _applyDiff(diff);
+
+    _aiPreviewMode = true;
+    document.getElementById('ai-preview-banner').style.display = 'flex';
+    cw.classList.add('ai-preview-locked');
+}
+
+function _cancelPreview() {
+    if (!_aiBackupState) return;
+
+    nodes = _aiBackupState.nodes;
+    edges = _aiBackupState.edges;
+    nCnt  = _aiBackupState.nCnt;
+    _aiBackupState = null;
+
+    cnv.innerHTML = '';
+    Object.entries(nodes).forEach(([nid, nd]) => rebuildNode(nid, nd));
+    renderEdges();
+    updateEmpty();
+
+    _exitPreviewMode();
+    _setAiStatus('info', '↩ Đã hủy — roadmap được khôi phục.', 4000);
+}
+
+async function _commitPreview() {
+    _exitPreviewMode();
+    _aiBackupState = null;
+    try {
+        await flushSave();
+        _setAiStatus('info', '✓ ' + (t('roadmap.ai_save_ok') || 'Đã lưu'), 4000);
+    } catch {
+        _setAiStatus('error', '⚠ ' + (t('roadmap.ai_save_fail') || 'Lưu thất bại'), 5000);
+    }
+}
+
+function _exitPreviewMode() {
+    _aiPreviewMode = false;
+    document.getElementById('ai-preview-banner').style.display = 'none';
+    cw.classList.remove('ai-preview-locked');
+}
+
+// ── APPLY DIFF ─────────────────────────────────────────────────────────────
+
+function _applyDiff(diff) {
+    if (!diff) return;
+
+    const deleteKeys = new Set(diff.delete_nodes || []);
+    deleteKeys.forEach(nid => {
+        ndEl(nid)?.remove();
+        delete nodes[nid];
+    });
+
+    const validKeys = new Set(Object.keys(nodes));
+    edges = edges.filter(e => validKeys.has(e.from) && validKeys.has(e.to));
+
+    (diff.delete_edges || []).forEach(de => {
+        edges = edges.filter(e => !(e.from === de.from && e.to === de.to));
+    });
+
+    Object.entries(diff.update_nodes || {}).forEach(([nid, patch]) => {
+        if (!nodes[nid]) return;
+        if (patch.item) nodes[nid].item = { ...nodes[nid].item, ...patch.item };
+        if (patch.x !== undefined) nodes[nid].x = patch.x;
+        if (patch.y !== undefined) nodes[nid].y = patch.y;
+        ndEl(nid)?.remove();
+        rebuildNode(nid, nodes[nid]);
+        const el = ndEl(nid);
+        if (el) { el.style.left = nodes[nid].x + 'px'; el.style.top = nodes[nid].y + 'px'; }
+    });
+
+    Object.entries(diff.add_nodes || {}).forEach(([nid, nd]) => {
+        if (!nd?.item) return;
+        nodes[nid] = { x: nd.x || 0, y: nd.y || 0, item: nd.item };
+        nCnt = Math.max(nCnt, parseInt(nid.replace('n', '')) || 0);
+        rebuildNode(nid, nodes[nid]);
+        const el = ndEl(nid);
+        if (el) { el.style.left = nodes[nid].x + 'px'; el.style.top = nodes[nid].y + 'px'; }
+    });
+
+    (diff.add_edges || []).forEach(ae => {
+        if (!ae.from || !ae.to) return;
+        if (!nodes[ae.from] || !nodes[ae.to]) return;
+        const dup = edges.find(e =>
+            e.from === ae.from && e.to === ae.to &&
+            e.fromPort === ae.fromPort && e.toPort === ae.toPort
+        );
+        if (!dup) edges.push({
+            from:     ae.from,
+            to:       ae.to,
+            fromPort: ae.fromPort || 'right',
+            toPort:   ae.toPort   || 'left',
+            etype:    ae.etype    || 'one',
+            style:    ae.style    || 'solid',
+            label:    ae.label    || ''
+        });
+    });
+
+    renderEdges();
+    updateEmpty();
+}
+
+// ── SYNC NEW NODES → WORKSPACE ITEMS ──────────────────────────────────────
+// Tạo real FOLDER/PROJECT items cho các node mới AI thêm vào roadmap,
+// cập nhật item.id bằng UUID thật để roadmap lưu đúng reference.
+async function _syncAddedNodesToItems(addNodes) {
+    if (!addNodes) return;
+    const entries = Object.entries(addNodes);
+    if (!entries.length) return;
+
+    const idMap = {};
+
+    // FOLDERs trước để PROJECT có thể dùng parent_id đúng
+    const ordered = [
+        ...entries.filter(([, nd]) => nd?.item?.type === 'FOLDER'),
+        ...entries.filter(([, nd]) => nd?.item?.type === 'PROJECT'),
+    ];
+
+    for (const [nkey, nd] of ordered) {
+        const item = nd.item;
+        if (!item || !['FOLDER', 'PROJECT'].includes(item.type)) continue;
+
+        const realParentId = idMap[item.parent_id] ?? item.parent_id ?? null;
+        const res = await utils.fetchWithAuth(`${API}/items`, {
+            method: 'POST',
+            body: JSON.stringify({
+                name:      item.name,
+                type:      item.type,
+                parent_id: realParentId,
+                position:  0,
+                color:     item.color || '#a0aec0',
+                expanded:  false
+            })
+        });
+        if (!res.ok) throw new Error(`${item.type} "${item.name}" tạo thất bại`);
+        const created = await res.json();
+
+        idMap[item.id] = created.id;
+        idMap[nkey]    = created.id;
+        if (nodes[nkey]) nodes[nkey].item.id = created.id;
+    }
+
+    // Cập nhật parent_id trong toàn bộ canvas sang UUID thật
+    Object.values(nodes).forEach(nd => {
+        if (nd.item?.parent_id && idMap[nd.item.parent_id]) {
+            nd.item.parent_id = idMap[nd.item.parent_id];
+        }
+    });
+}
+
+
 // UTILS
 // ═══════════════════════════════════════════════════════════════════════════
 

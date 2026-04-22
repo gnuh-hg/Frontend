@@ -275,8 +275,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (IS_TEST) _mountTestBanner();
     setupEvents();
     setupResizer();
-    // Load items + history in parallel (items needed for roadmap node rendering)
-    await Promise.all([loadItems(), loadHistory()]);
+    // Chỉ load items (không load history — chat không lưu lịch sử)
+    await loadItems();
+    renderThread();
 
     onLangChange(() => {
         // Welcome screen visible → re-render (rebuilds chips + card titles too)
@@ -380,10 +381,15 @@ async function sendMessage(text) {
     showTyping();
 
     try {
-        // 1. POST user message
+        // Truyền history gần nhất để AI có context đa lượt
+        const history = _messages.slice(-20).map(m => ({
+            role:    m.role,
+            message: m.content || '',
+        }));
+
         const postRes = await apiFetch(
             `${API}/chatbot`,
-            { method: 'POST', body: JSON.stringify({ message: text.trim() }) },
+            { method: 'POST', body: JSON.stringify({ message: text.trim(), history }) },
             { onLoadStart: () => {}, onLoadEnd: () => {} }
         );
 
@@ -393,29 +399,19 @@ async function sendMessage(text) {
             throw new Error(errBody.detail || t('chatbot.msg_send_error'));
         }
 
-        // 2. Check if POST response already contains AI message
-        let aiMsg = null;
-        try {
-            const postData = await postRes.json();
-            aiMsg = extractAIMessage(postData);
-            if (aiMsg) console.debug('[Chatbot] sendMessage: AI reply in POST response');
-        } catch { /* body not JSON or already consumed */ }
-
-        // 3. Poll GET /chatbot if not yet resolved
-        if (!aiMsg) {
-            console.debug('[Chatbot] sendMessage: no AI reply in POST, starting poll…');
-            aiMsg = await pollAIResponse();
-        }
+        // Backend trả kết quả trực tiếp trong POST body (không cần poll)
+        const postData = await postRes.json();
+        const aiMsg = extractAIMessage(postData);
 
         hideTyping();
 
         if (aiMsg) {
-            console.debug('[Chatbot] sendMessage: AI reply received', { type: aiMsg.type || 'text', contentLength: aiMsg.content?.length });
+            console.debug('[Chatbot] sendMessage: AI reply received', { type: aiMsg.type || 'text' });
             _messages.push(aiMsg);
             appendMessage(aiMsg);
             scrollToBottom();
         } else {
-            console.warn('[Chatbot] sendMessage: no AI reply after polling exhausted');
+            console.warn('[Chatbot] sendMessage: empty AI reply');
             utils.showError(t('chatbot.msg_no_response'));
         }
     } catch (err) {
