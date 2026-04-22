@@ -554,8 +554,8 @@ document.addEventListener('DOMContentLoaded', async function () {
         toggle.addEventListener('change', onSettingChange);
     });
 
-    document.querySelector('[title="Reset"]')?.addEventListener('click', resetTimer);
-    document.querySelector('[title="Skip"]')?.addEventListener('click', skipTimer);
+    document.getElementById('resetBtn')?.addEventListener('click', resetTimer);
+    document.getElementById('skipBtn')?.addEventListener('click', skipTimer);
     document.querySelector('.close-btn')?.addEventListener('click', closePomodoro);
 
     // --- 12. GLOBAL EXPOSE ---
