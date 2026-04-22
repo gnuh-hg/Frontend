@@ -5,7 +5,7 @@
  */
 
 import * as utils from '../utils.js';
-import { t, initI18n } from '../i18n.js';
+import { t, initI18n, onLangChange } from '../i18n.js';
 
 const API = utils.URL_API;
 
@@ -134,7 +134,6 @@ async function apiFetch(url, options = {}, queueOptions = {}, timeoutMs = 180000
         const controller = new AbortController();
         const timeoutId  = setTimeout(() => controller.abort(), timeoutMs);
 
-        console.debug(`[Chatbot] ▶ ${method} ${path}`, options.body ? JSON.parse(options.body) : '');
 
         try {
             const res = await fetch(url, {
@@ -278,6 +277,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupResizer();
     // Load items + history in parallel (items needed for roadmap node rendering)
     await Promise.all([loadItems(), loadHistory()]);
+
+    onLangChange(() => {
+        // Welcome screen visible → re-render (rebuilds chips + card titles too)
+        if (thread?.querySelector('.cb-empty')) {
+            renderThread();
+            return;
+        }
+
+        // Sender labels in rendered messages
+        document.querySelectorAll('.cb-msg-sender').forEach(el => {
+            const isUser = el.closest('.cb-msg--user') !== null;
+            el.textContent = isUser ? t('chatbot.sender_you') : t('chatbot.sender_ai');
+        });
+
+        // Save button text node (button contains SVG + text node)
+        document.querySelectorAll('.cb-trigger-save-btn').forEach(btn => {
+            const textNode = [...btn.childNodes].find(n => n.nodeType === Node.TEXT_NODE && n.textContent.trim());
+            if (textNode) textNode.textContent = ` ${t('chatbot.btn_save')}`;
+        });
+
+        // Input placeholder
+        if (inputEl) inputEl.placeholder = t('chatbot.input_placeholder');
+    });
 });
 
 function _mountTestBanner() {
@@ -324,7 +346,6 @@ async function loadHistory() {
             throw new Error('Failed to load history');
         }
         const data = await res.json();
-        console.log('[Chatbot] loadHistory: raw response', data);
         // Spec: GET /chatbot/history trả về { history: Message[], total, limit }
         // Mỗi Message dùng field 'message' (không phải 'content') → chuẩn hoá về internal format
         const raw = Array.isArray(data.history) ? data.history
@@ -376,7 +397,6 @@ async function sendMessage(text) {
         let aiMsg = null;
         try {
             const postData = await postRes.json();
-            console.log('[Chatbot] POST /chatbot response', postData);
             aiMsg = extractAIMessage(postData);
             if (aiMsg) console.debug('[Chatbot] sendMessage: AI reply in POST response');
         } catch { /* body not JSON or already consumed */ }
@@ -454,10 +474,8 @@ async function pollAIResponse(maxAttempts = 15, intervalMs = 2000) {
                 continue;
             }
             const data = await res.json();
-            console.log(`[Chatbot] GET /chatbot poll attempt ${i + 1} — raw response`, data);
             const msg  = extractAIMessage(data);
             if (msg) {
-                console.log(`[Chatbot] pollAIResponse: resolved on attempt ${i + 1} — AI message`, msg);
                 return msg;
             }
             console.debug(`[Chatbot] pollAIResponse: attempt ${i + 1} — empty response, retrying…`);

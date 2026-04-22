@@ -5,7 +5,7 @@
  */
 
 import * as utils from '../utils.js';
-import { t, initI18n } from '../i18n.js';
+import { t, initI18n, onLangChange } from '../i18n.js';
 import { showHintFloat } from './hint_float.js';
 
 // ── API ENDPOINTS ──────────────────────────────────────────────────────────
@@ -72,6 +72,22 @@ document.addEventListener('DOMContentLoaded', async () => {
             () => t('hints.roadmap_step3'),
         ],
         dismissLabel: () => t('hints.dismiss'),
+    });
+
+    onLangChange(() => {
+        renderRoadmapList();
+        if (!ITEMS.length) {
+            const li = document.querySelector('#rm-item-list li');
+            if (li) li.textContent = t('roadmap.components_empty');
+        }
+        const typeMap = { FOLDER: t('roadmap.node_folder'), PROJECT: t('roadmap.node_project'), TASK: t('roadmap.node_task') };
+        document.querySelectorAll('.nd-lbl').forEach(el => {
+            const nd = el.closest('.nd');
+            if (!nd) return;
+            const nid = nd.id.replace('nd-', '');
+            const item = nodes[nid]?.item;
+            if (item) el.textContent = typeMap[item.type] || item.type;
+        });
     });
 });
 
@@ -382,14 +398,14 @@ function renderRoadmapList() {
                         <rect x="3" y="14" width="7" height="7" rx="1"/>
                         <rect x="14" y="14" width="7" height="7" rx="1"/>
                     </svg>
-                    ${nodeCount} node
+                    ${t('roadmap.node_count', { n: nodeCount })}
                 </span>
                 <span class="rm-meta-item">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="5" y1="12" x2="19" y2="12"/>
                         <polyline points="12 5 19 12 12 19"/>
                     </svg>
-                    ${edgeCount} kết nối
+                    ${t('roadmap.edge_count', { n: edgeCount })}
                 </span>
             </div>`;
 
@@ -527,8 +543,6 @@ async function loadActiveRoadmap() {
         if (!res.ok) throw new Error('Load roadmap failed');
         const data = await res.json();
 
-        console.log('[Roadmap] Loaded roadmap data:', data);
-
         nodes = data.nodes  || {};
         edges = data.edges  || [];
         nCnt  = data.nCnt   || 0;
@@ -638,7 +652,7 @@ function createNodeEl(nid, item) {
     el.className = 'nd nd-new';
     setTimeout(() => el.classList.remove('nd-new'), 400);
 
-    const typeLabel = { FOLDER: 'Folder', PROJECT: 'Project', TASK: 'Task' }[item.type] || item.type;
+    const typeLabel = { FOLDER: t('roadmap.node_folder'), PROJECT: t('roadmap.node_project'), TASK: t('roadmap.node_task') }[item.type] || item.type;
 
     // Icon style
     let icoStyle = '';
@@ -650,8 +664,9 @@ function createNodeEl(nid, item) {
         icoStyle = `border-radius:3px;background:${item.color || '#6366f1'}`;
     }
 
-    // Parent name - lấy trực tiếp từ data thay vì tìm trong folder tree
-    const parentName = item.parent_name || null;
+    const parentName = item.parent_name
+        || (item.parent_id ? ITEMS.find(i => i.id === item.parent_id)?.name : null)
+        || null;
 
     el.innerHTML = `
         <div class="nd-hdr">
@@ -819,11 +834,11 @@ function handlePortClick(nid, portName, portEl) {
         connPortFirst = { nid, port: portName };
         portEl.classList.add('port-pending');
         ndEl(nid)?.classList.add('port-active');
-        setHint('Nhấn vào cổng của node đích để nối · Esc huỷ');
+        setHint(t('roadmap.hint_port'));
     } else {
         if (connPortFirst.nid === nid) {
             connPortFirst = null; clearPendingPorts(); setPrev('');
-            setHint('Kéo thả để thêm · Click nền để di chuyển · Ctrl + Scroll để zoom');
+            setHint(t('roadmap.hint_bar'));
             return;
         }
         const dup = edges.find(e =>
@@ -839,7 +854,7 @@ function handlePortClick(nid, portName, portEl) {
         }
         connPortFirst = null; clearPendingPorts(); setPrev('');
         renderEdges(); saveState();
-        setHint('Kéo thả để thêm · Click nền để di chuyển · Ctrl + Scroll để zoom');
+        setHint(t('roadmap.hint_bar'));
     }
 }
 

@@ -19,6 +19,8 @@
  *   });
  */
 
+import { onLangChange } from '../i18n.js';
+
 const resolve = v => (typeof v === 'function' ? v() : v);
 
 /**
@@ -109,6 +111,26 @@ export function showHintFloat(options = {}) {
     }
 
     document.body.appendChild(card);
+
+    onLangChange(() => {
+        if (!card.isConnected) return;
+        if (variant === 'intent') {
+            card.querySelector('.hint-float-title').textContent = resolve(title) ?? '';
+            const ta = card.querySelector('.hint-float-textarea');
+            if (ta && !ta.disabled) ta.placeholder = resolve(placeholder) ?? '';
+            const skipEl = card.querySelector('.hint-float-skip');
+            if (skipEl && !skipEl.disabled) skipEl.textContent = resolve(skipLabel) ?? 'Later';
+            const submitEl = card.querySelector('.hint-float-submit');
+            if (submitEl && !submitEl.disabled) submitEl.textContent = resolve(submitLabel) ?? 'Submit';
+        } else {
+            card.querySelector('.hint-float-title').textContent = resolve(title) ?? '';
+            card.querySelectorAll('.hint-float-steps li').forEach((li, i) => {
+                li.innerHTML = `<span class="hint-num">${i + 1}.</span> ${resolve(steps[i])}`;
+            });
+            const dismissEl = card.querySelector('.hint-float-dismiss');
+            if (dismissEl) dismissEl.textContent = resolve(dismissLabel) ?? 'Got it';
+        }
+    });
 }
 
 /**

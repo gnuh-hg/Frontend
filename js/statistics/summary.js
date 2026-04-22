@@ -1,7 +1,7 @@
 /* ── summary.js ── */
 
 import * as utils from '../../utils.js';
-import { t, initI18n } from '../../i18n.js';
+import { t, initI18n, onLangChange } from '../../i18n.js';
 
 let SUMMARY_DATASETS;
 
@@ -79,6 +79,8 @@ function setSummaryPeriod(p, btn) {
 }
 
 export { initSummary, setSummaryPeriod };
+
+onLangChange(() => { if (SUMMARY_DATASETS) renderSummary(); });
 
 function calcDelta(curr, prev) {
   if (!prev) return { pct: 0, dir: 'neutral', noData: true };

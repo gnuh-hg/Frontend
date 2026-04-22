@@ -64,15 +64,18 @@
                         <rect x="36" y="36" width="24" height="24" rx="4"
                               stroke="currentColor" stroke-width="1.5"/>
                     </svg>
-                    <p>Kéo thành phần vào đây<br>hoặc tạo roadmap mới</p>
+                    <p>
+                        <span data-i18n="roadmap.canvas_empty_line1">Kéo thành phần vào đây</span><br>
+                        <span data-i18n="roadmap.canvas_empty_line2">hoặc tạo roadmap mới</span>
+                    </p>
                 </div>
 
                 <!-- Zoom badge -->
                 <div id="zoom-badge">100%</div>
 
                 <!-- Hint bar -->
-                <div id="hint-bar">
-                    Kéo thả để thêm &nbsp;·&nbsp; Click nền để di chuyển &nbsp;·&nbsp; Ctrl + Scroll để zoom
+                <div id="hint-bar" data-i18n="roadmap.hint_bar">
+                    Kéo thả để thêm · Click nền để di chuyển · Ctrl + Scroll để zoom
                 </div>
 
                 <!-- Mini toolbar -->
@@ -81,7 +84,7 @@
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
                         </svg>
-                        <span>Reset zoom</span>
+                        <span data-i18n="roadmap.mt_zoom_reset">Reset zoom</span>
                     </button>
                     <div class="mt-sep"></div>
                     <button class="mt-btn mt-btn--danger" id="mt-clear">
@@ -90,7 +93,7 @@
                             <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
                             <path d="M10 11v6M14 11v6"/>
                         </svg>
-                        <span>Xóa tất cả</span>
+                        <span data-i18n="roadmap.mt_clear">Xóa tất cả</span>
                     </button>
                 </div>
             </div>
@@ -108,14 +111,14 @@
             <!-- TOP: Saved roadmaps -->
             <div id="sb-right">
                 <div class="sb-head sb-head--between">
-                    <span class="sb-head-title">Roadmaps</span>
+                    <span class="sb-head-title" data-i18n="roadmap.roadmaps_title">Roadmaps</span>
                     <button id="btn-new-rm" class="btn-new-rm" title="Tạo roadmap mới">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
                              stroke-linecap="round">
                             <line x1="12" y1="5" x2="12" y2="19"/>
                             <line x1="5"  y1="12" x2="19" y2="12"/>
                         </svg>
-                        Tạo mới
+                        <span data-i18n="roadmap.create_new">Tạo mới</span>
                     </button>
                 </div>
                 <div class="sb-body" id="sb-right-body">
@@ -154,7 +157,8 @@
                         <line x1="21" y1="21" x2="16.65" y2="16.65"/>
                     </svg>
                     <input id="sb-search" class="sb-search-input"
-                           placeholder="Tìm thành phần…" type="search" autocomplete="off">
+                           placeholder="Tìm thành phần…" type="search" autocomplete="off"
+                           data-i18n-placeholder="roadmap.search_placeholder">
                 </div>
                 <div class="sb-body">
                     <ul id="rm-item-list" class="list-wrapper"></ul>
@@ -201,10 +205,10 @@
                 <line x1="6"  y1="6" x2="18" y2="18"/>
             </svg>
         </button>
-        <h4 class="ep-title">Chỉnh sửa kết nối</h4>
+        <h4 class="ep-title" data-i18n="roadmap.edge_title">Chỉnh sửa kết nối</h4>
 
         <div class="ep-row">
-            <span class="ep-label">Mũi tên</span>
+            <span class="ep-label" data-i18n="roadmap.edge_arrow">Mũi tên</span>
             <div class="ep-btns">
                 <button class="ep-b" id="epa-none" title="Không mũi tên">
                     <svg viewBox="0 0 28 8" fill="none" stroke="currentColor" stroke-width="2">
@@ -230,7 +234,7 @@
         </div>
 
         <div class="ep-row">
-            <span class="ep-label">Kiểu đường</span>
+            <span class="ep-label" data-i18n="roadmap.edge_style">Kiểu đường</span>
             <div class="ep-btns">
                 <button class="ep-b" id="eps-solid" title="Liền">
                     <svg viewBox="0 0 28 8" fill="none" stroke="currentColor" stroke-width="2">
@@ -259,7 +263,7 @@
         </div>
 
         <div class="ep-row ep-row--label">
-            <span class="ep-label">Tên</span>
+            <span class="ep-label" data-i18n="roadmap.edge_label">Tên</span>
             <input class="ep-input" id="ep-label-input" placeholder="(bỏ trống)">
         </div>
 
@@ -269,7 +273,7 @@
                 <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
                 <path d="M10 11v6M14 11v6"/>
             </svg>
-            Xóa kết nối này
+            <span data-i18n="roadmap.edge_delete">Xóa kết nối này</span>
         </button>
     </div>
 

@@ -1,5 +1,5 @@
 import * as utils from '../utils.js';
-import { t, initI18n } from '../i18n.js';
+import { t, initI18n, onLangChange } from '../i18n.js';
 import * as idb from '../idb.js';
 import { showHintFloat } from './hint_float.js';
 
@@ -605,5 +605,22 @@ document.addEventListener('DOMContentLoaded', async function () {
     remainingSeconds = totalSeconds;
     updateDisplay();
     setupMobileTabs();
+
+    // ── 15. LANG CHANGE ─────────────────────────────────────────────────────
+    // applyDOM() runs first (via setLang), then this callback fixes dynamic labels
+    // that applyDOM() incorrectly overwrites with stale data-i18n attributes.
+    onLangChange(() => {
+        // Mode label: applyDOM sets 'pomodoro.mode.focus' always — fix with actual mode
+        modeLabel.textContent = t(`pomodoro.mode_${currentMode}`);
+
+        // Start/pause label: applyDOM sets 'pomodoro.controls.start' always — fix with running state
+        updateStartBtn();
+
+        // Task trigger: applyDOM overwrites task name with placeholder if task is selected
+        if (selectedTask) {
+            taskTriggerLabel.textContent = selectedTask.name;
+            taskTriggerLabel.style.color = 'var(--text-primary)';
+        }
+    });
 
 });

@@ -221,7 +221,7 @@ function applyCollapse(collapsed) {
 }
 
 function toggleCollapse() {
-    const next = !isCollapsed();
+    const next = !document.body.classList.contains('gs-collapsed');
     localStorage.setItem('sidebarCollapsed', String(next));
     applyCollapse(next);
 }
@@ -515,8 +515,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Apply collapse state
     const page_auto_collapse = AUTO_COLLAPSE_PAGES.includes(page);
     if (page_auto_collapse) {
-        // Auto-collapse on focused pages, don't overwrite user pref
-        document.body.classList.add('gs-collapsed');
+        // Default to collapsed on focused pages, but respect stored preference
+        const stored = localStorage.getItem('sidebarCollapsed');
+        applyCollapse(stored === null ? true : stored === 'true');
     } else {
         applyCollapse(isCollapsed());
     }

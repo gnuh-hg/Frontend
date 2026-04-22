@@ -1,7 +1,7 @@
 /* ── heatmap.js ── */
 
 import * as utils from '../../utils.js';
-import { t, initI18n } from '../../i18n.js';
+import { t, initI18n, onLangChange } from '../../i18n.js';
 
 function hmGenerateData() {
   const today = new Date(); today.setHours(0,0,0,0);
@@ -124,6 +124,8 @@ function setHmMetric(m, btn) {
 }
 
 export { initHeatmap, setHmMetric };
+
+onLangChange(() => { if (HM_DATA) renderHeatmap(); });
 
 function renderHeatmap() {
   const today = new Date(); today.setHours(0,0,0,0);

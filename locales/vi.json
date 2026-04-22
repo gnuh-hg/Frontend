@@ -497,7 +497,7 @@
     "hint_bar": "Kéo thả để thêm · Click nền để di chuyển · Ctrl + Scroll để zoom",
     "hint_port": "Nhấn vào cổng của node đích để nối · Esc huỷ",
     "mt_layout": "Sắp xếp",
-    "mt_zoom_reset": "Reset zoom",
+    "mt_zoom_reset": "Đặt lại",
     "mt_clear": "Xóa tất cả",
     "clear_confirm": "Xóa tất cả node và kết nối?",
     "edge_title": "Chỉnh sửa kết nối",

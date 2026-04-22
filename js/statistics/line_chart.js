@@ -1,7 +1,7 @@
 /* ── line-chart.js ── */
 
 import * as utils from '../../utils.js';
-import { t, initI18n } from '../../i18n.js';
+import { t, initI18n, onLangChange } from '../../i18n.js';
 
 const LC_H = 220, LC_PT = 16, LC_PB = 4;
 const LC_PH = LC_H - LC_PT - LC_PB, LC_STEPS = 5;
@@ -130,6 +130,19 @@ function switchLcPeriod(p, btn) {
 }
 
 export { initLineChart, switchLcPeriod };
+
+onLangChange(() => {
+    if (!LC_DATASETS) return;
+    if (utils.TEST && LC_DATASETS.year) {
+        LC_DATASETS.year.labels = [
+            t('statistics.month_jan'), t('statistics.month_feb'), t('statistics.month_mar'),
+            t('statistics.month_apr'), t('statistics.month_may'), t('statistics.month_jun'),
+            t('statistics.month_jul'), t('statistics.month_aug'), t('statistics.month_sep'),
+            t('statistics.month_oct'), t('statistics.month_nov'), t('statistics.month_dec'),
+        ];
+    }
+    renderLineChart();
+});
 
 function renderLineChart() {
   const W    = lcGetWidth();

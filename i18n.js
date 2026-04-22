@@ -76,3 +76,7 @@ export function setLang(lang) {
 }
 
 export function getLang() { return currentLang; }
+
+export function onLangChange(fn) {
+    window.addEventListener('langChanged', e => fn(e.detail));
+}

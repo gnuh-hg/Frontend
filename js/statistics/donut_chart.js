@@ -1,7 +1,7 @@
 /* ── donut.js ── */
 
 import * as utils from '../../utils.js';
-import { t, initI18n } from '../../i18n.js';
+import { t, initI18n, onLangChange } from '../../i18n.js';
 
 const DONUT_R = 56;
 const DONUT_CIRC = 2 * Math.PI * DONUT_R;
@@ -158,6 +158,8 @@ function setDonutMetric(m, btn) {
 }
 
 export { initDonut, setDonutPeriod, setDonutMetric };
+
+onLangChange(() => { if (DONUT_DATA) renderDonut(); });
 
 function donutFmtVal(v) {
   return donutMetric === 'focus'

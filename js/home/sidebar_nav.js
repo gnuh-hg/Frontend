@@ -550,38 +550,36 @@ document.addEventListener('DOMContentLoaded', async function() {
         
         const id = currentSelectedItem.getAttribute('data-id');
 
-        if (utils.TEST) {
-            if (currentSelectedItem.classList.contains('project-item-child')) {
+        const isProject = currentSelectedItem.classList.contains('project-item-child');
+
+        function removeItemLocally() {
+            if (isProject) {
                 document.dispatchEvent(new CustomEvent('projectDeleted', {
                     detail: { id: currentSelectedItem.getAttribute('data-id') }
                 }));
+                utils.removeUserItem('selectedProjectId');
+                utils.removeUserItem('selectedProjectName');
             }
-
             currentSelectedItem.remove();
             updateEmptyState();
             closeModals();
+        }
+
+        if (utils.TEST) {
+            removeItemLocally();
             return;
         }
 
         if (id.startsWith("tmp-")) {
             await idb.deleteData(utils.QUEUE_STORE, id);
-
-            if (currentSelectedItem.classList.contains('project-item-child')) {
-                document.dispatchEvent(new CustomEvent('projectDeleted', {
-                    detail: { id: currentSelectedItem.getAttribute('data-id') }
-                }));
-            }
-
-            currentSelectedItem.remove();
-            updateEmptyState();
-            closeModals();
+            removeItemLocally();
             return;
         }
 
         try {
             const res = await utils.fetchWithAuth(
                 `${utils.URL_API}/items/${id}`,
-                { 
+                {
                     method: 'DELETE'
                 },
                 {
@@ -589,17 +587,9 @@ document.addEventListener('DOMContentLoaded', async function() {
                 },
                 utils.generateId(), 1
             );
-            
-            if (res.ok) {
-                if (currentSelectedItem.classList.contains('project-item-child')) {
-                    document.dispatchEvent(new CustomEvent('projectDeleted', {
-                        detail: { id: currentSelectedItem.getAttribute('data-id') }
-                    }));
-                }
 
-                currentSelectedItem.remove();
-                updateEmptyState();
-                closeModals();
+            if (res.ok) {
+                removeItemLocally();
                 utils.showSuccess(t('home.msg_item_deleted'));
             } else {
                 const errorData = await res.json();
@@ -608,9 +598,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         } catch (err) {
             console.error("Lỗi khi xóa item:", err);
             if (utils.TEST) {
-                currentSelectedItem.remove();
-                updateEmptyState();
-                closeModals();
+                removeItemLocally();
             }
         }
     });

@@ -41,7 +41,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     function restoreSelectedProject() {
         const savedId = utils.getUserItem('selectedProjectId');
         const savedName = utils.getUserItem('selectedProjectName');
-        console.log('Restoring selected project:', savedId, savedName);
         if (!savedId || !savedName) return;
         const event = new CustomEvent('projectSelected', {
             detail: { id: savedId, name: savedName },
@@ -51,9 +50,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     };
 
     document.addEventListener('projectUpdated', function(e) {
-        console.log('Received projectUpdated event:', e.detail);
         const { id, name } = e.detail;
-        // console.log('Project updated:', id, name);
         if (projectId === id) {
             nameProject = name;
             container.querySelector('h1 p').innerHTML = name;
@@ -411,7 +408,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
     
     function attachEvents(item, data){
-        console.log(data);
         item.querySelector('.task-header button').addEventListener('click', async function (e) {
             e.stopPropagation();
             if (item.classList.contains('completed')) return;
@@ -468,7 +464,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         item.addEventListener('click', (e) => {
             e.stopPropagation();
             if (!panel) return;
-            console.log(data);
             const name = panel.querySelector('.detail-task-name');
             const priority = panel.querySelector('.priority-badge');
             const priority_text = panel.querySelector('.priority-badge span');
@@ -1478,10 +1473,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
         }
     
-        document.querySelectorAll('[data-i18n]').forEach(el => {
-            el.textContent = t(el.getAttribute('data-i18n'));
-        });
-
         // Update calendar overlay i18n elements
         const calendarOverlay = document.getElementById('sf-cal-overlay');
         if (calendarOverlay) {
@@ -1829,7 +1820,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         // PUT /project/${projectId}/sort
         // Body: [{ field, order, ascending }]  hoặc [] để tắt
         const payload = buildSortPayload(sortConditions);
-        console.log('[SORT PAYLOAD]', payload);
 
         if (!utils.TEST && projectId) {
             try {
@@ -2187,7 +2177,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         document.dispatchEvent(new CustomEvent('filterApplied', { detail: window.filterState }));
 
         const payload = buildFilterPayload(filterConditions, filterLogic);
-        console.log('[FILTER PAYLOAD]', payload);
 
         if (!utils.TEST && projectId) {
             try {

@@ -16,17 +16,13 @@
         const path = window.location.pathname;
         const isIndex = path.endsWith('index.html') || path === '/' || path === '';
         if (!isIndex) {
-            console.log('[intent_prompt] Not index.html, skipping');
             return;
         }
 
         // ── Guard: already asked ────────────────────────────────────────────────
         if (localStorage.getItem('manask_intent_asked')) {
-            console.log('[intent_prompt] Already asked, skipping');
             return;
         }
-
-        console.log('[intent_prompt] Starting...');
 
         // ── Lazy imports (deferred so non-index pages pay no cost) ──────────────
         const [{ showHintFloat }, { t, initI18n }, utilsModule] = await Promise.all([
@@ -42,10 +38,7 @@
             URL_API: utilsModule.URL_API,
         };
 
-        console.log('[intent_prompt] Imports successful. utils:', utils);
-
         await initI18n();
-        console.log('[intent_prompt] i18n initialized');
 
     // ── onSubmit handler ────────────────────────────────────────────────────
     async function onSubmit(text) {
