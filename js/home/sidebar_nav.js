@@ -599,7 +599,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             console.error("Lỗi khi xóa item:", err);
             if (utils.TEST) {
                 removeItemLocally();
-            }
+                }
         }
     });
 

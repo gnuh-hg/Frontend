@@ -94,7 +94,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     function showTaskLoadError() {
         removeTaskLoadError();
-        const taskList = container.querySelector('.task-list');
+        const taskList = container.querySelector('.task-list-active');
         const errorEl = document.createElement('div');
         errorEl.className = 'task-load-error';
         errorEl.innerHTML = `
@@ -121,7 +121,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         removeTaskLoadError();
         document.querySelectorAll('.task').forEach(el => el.remove());
 
-        const taskList = container.querySelector('.task-list');
+        const taskList = container.querySelector('.task-list-active');
         taskList.innerHTML = TASK_SKELETON_HTML;
 
         try {
@@ -142,6 +142,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             } else {
                 hideEmptyState();
                 items.forEach(item => renderItem(item));
+                updateCompletedDivider();
             }
 
             // Load sort & filter settings từ backend
@@ -366,7 +367,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         const el = document.createElement('div');
         el.className = 'empty-state';
         el.innerHTML = `${cfg.svg}<h3>${cfg.title}</h3><p>${cfg.desc}</p>`;
-        container.querySelector('.task-list').appendChild(el);
+        container.querySelector('.task-list-active').appendChild(el);
     }
 
     function hideEmptyState() {
@@ -374,89 +375,214 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     function renderItem(item) {
+        if (item.is_completed) {
+            renderCompletedItem(item);
+        } else {
+            renderActiveItem(item);
+        }
+    }
+
+    function renderActiveItem(item) {
         hideEmptyState();
+        const el = document.createElement('div');
+        el.className = `task ${item.priority}`;
+        el.dataset.id = item.id;
+        el.innerHTML = buildActiveCardHTML(item);
+        taskListActive.appendChild(el);
+        attachEvents(el, item);
+    }
 
+    function renderCompletedItem(item) {
+        const el = document.createElement('div');
+        el.className = `task ${item.priority} task--completed`;
+        el.dataset.id = item.id;
+        el.innerHTML = buildCompletedCardHTML(item);
+        taskListCompleted.appendChild(el);
+        attachCompletedEvents(el, item);
+    }
+
+    const CALENDAR_SVG = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="4" y="5" width="16" height="16" rx="2" stroke="#6B7280" stroke-width="2" fill="white"/>
+          <line x1="4" y1="9" x2="20" y2="9" stroke="#6B7280" stroke-width="2"/>
+          <line x1="8" y1="3" x2="8" y2="6" stroke="#6B7280" stroke-width="2" stroke-linecap="round"/>
+          <line x1="16" y1="3" x2="16" y2="6" stroke="#6B7280" stroke-width="2" stroke-linecap="round"/>
+        </svg>`;
+
+    function buildActiveCardHTML(item) {
         const progress = item.progress ?? 0;
-
-        const html = `
-            <div class="task ${item.priority}" data-id="${item.id}">
-              <div class="task-header">
+        return `
+            <div class="task-header">
                 <div class="task-name">${item.name}</div>
                 <button class="btn-done">${t('home.btn_done')}</button>
-              </div>
-              <div class="task-deadline">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect x="4" y="5" width="16" height="16" rx="2" stroke="#6B7280" stroke-width="2" fill="white"/>
-                  <line x1="4" y1="9" x2="20" y2="9" stroke="#6B7280" stroke-width="2"/>
-                  <line x1="8" y1="3" x2="8" y2="6" stroke="#6B7280" stroke-width="2" stroke-linecap="round"/>
-                  <line x1="16" y1="3" x2="16" y2="6" stroke="#6B7280" stroke-width="2" stroke-linecap="round"/>
-                </svg>
-                <span>${t('home.task_due_prefix')} ${showDate(item.due_date)}</span>
-              </div>
-
-              <div class="task-progress${progress === 100 ? ' progress-full' : ''}">
-                <div class="progress-bar-container">
-                  <div class="progress-bar-fill" style="width: ${progress}%"></div>
-                </div>
-                <span class="progress-percent">${progress}%</span>
-              </div>
             </div>
-        `;
-        const wrapper = container.querySelector('.task-list');
-        wrapper.insertAdjacentHTML('beforeend', html);
-        attachEvents(wrapper.lastElementChild, item);
+            <div class="task-deadline">${CALENDAR_SVG}<span>${t('home.task_due_prefix')} ${showDate(item.due_date)}</span></div>
+            <div class="task-progress${progress === 100 ? ' progress-full' : ''}">
+                <div class="progress-bar-container"><div class="progress-bar-fill" style="width: ${progress}%"></div></div>
+                <span class="progress-percent">${progress}%</span>
+            </div>`;
     }
-    
-    function attachEvents(item, data){
-        item.querySelector('.task-header button').addEventListener('click', async function (e) {
-            e.stopPropagation();
-            if (item.classList.contains('completed')) return;
 
-            item.classList.add('completed');
+    function buildCompletedCardHTML(item) {
+        const difficulty = item.difficulty_rating ?? 0;
+        const dots = Array.from({ length: 5 }, (_, i) =>
+            `<span class="difficulty-dot${i < difficulty ? ' active' : ''}"></span>`
+        ).join('');
+        return `
+            <div class="task-header">
+                <div class="task-name">${item.name}</div>
+                <button class="btn-restore">${t('home.btn_restore')}</button>
+            </div>
+            <div class="task-difficulty">
+                <span class="difficulty-label">${t('home.difficulty_label')}</span>
+                ${dots}
+            </div>`;
+    }
+
+    function renderDifficultyWidget(dotsContainer, currentRating, onSelect) {
+        const dots = dotsContainer.querySelectorAll('.difficulty-dot');
+        function applyRating(n) {
+            dots.forEach((d, i) => d.classList.toggle('active', i < n));
+        }
+        applyRating(currentRating);
+        dots.forEach((dot, idx) => {
+            dot.addEventListener('mouseenter', () => applyRating(idx + 1));
+            dot.addEventListener('mouseleave', () => applyRating(currentRating));
+            dot.addEventListener('click', () => {
+                currentRating = idx + 1;
+                applyRating(currentRating);
+                onSelect(currentRating);
+            });
+        });
+    }
+
+    function attachCompletedEvents(item, data) {
+        // Difficulty widget on completed card (E3/E4)
+        const cardDots = item.querySelector('.task-difficulty');
+        if (cardDots) {
+            renderDifficultyWidget(cardDots, data.difficulty_rating ?? 0, (rating) => {
+                const found = taskData.find(d => String(d.id) === String(data.id));
+                if (found) found.difficulty_rating = rating;
+                data.difficulty_rating = rating;
+
+                if (utils.TEST) return;
+
+                if (data.id.toString().startsWith('tmp-')) {
+                    idb.getData(utils.QUEUE_STORE, data.id).then(existing => {
+                        if (!existing) return;
+                        idb.patchData(utils.QUEUE_STORE, data.id, {
+                            options: {
+                                ...existing.options,
+                                body: JSON.stringify({ ...JSON.parse(existing.options.body), difficulty_rating: rating })
+                            }
+                        });
+                    });
+                    return;
+                }
+
+                utils.fetchWithAuth(
+                    `${utils.URL_API}/project/${projectId}/items/${data.id}`,
+                    { method: 'PATCH', body: JSON.stringify({ difficulty_rating: rating }) },
+                    { enableQueue: true }
+                ).catch(() => {});
+            });
+        }
+
+        item.querySelector('.btn-restore').addEventListener('click', async function(e) {
+            e.stopPropagation();
+
+            const found = taskData.find(d => String(d.id) === String(data.id));
+            if (found) found.is_completed = false;
+            data.is_completed = false;
+
+            item.className = `task ${data.priority}`;
+            item.innerHTML = buildActiveCardHTML(data);
+            taskListActive.appendChild(item);
+            attachEvents(item, data);
+            hideEmptyState();
+            updateCompletedDivider();
+
+            if (utils.TEST) return;
+
+            if (data.id.toString().startsWith('tmp-')) {
+                idb.getData(utils.QUEUE_STORE, data.id).then(existing => {
+                    if (!existing) return;
+                    idb.patchData(utils.QUEUE_STORE, data.id, {
+                        options: {
+                            ...existing.options,
+                            body: JSON.stringify({ ...JSON.parse(existing.options.body), is_completed: false })
+                        }
+                    });
+                });
+                return;
+            }
+
+            utils.fetchWithAuth(
+                `${utils.URL_API}/project/${projectId}/items/${data.id}`,
+                { method: 'PATCH', body: JSON.stringify({ is_completed: false }) },
+                { enableQueue: true }
+            ).then(async res => {
+                if (!res.ok) utils.showError(t('home.msg_task_delete_error'));
+            }).catch(() => {});
+        });
+    }
+
+    function attachEvents(item, data){
+        item.querySelector('.btn-done').addEventListener('click', async function (e) {
+            e.stopPropagation();
+            if (item.classList.contains('completing')) return;
+            item.classList.add('completing');
+
             const progressBar = item.querySelector('.progress-bar-fill');
             const progressPercent = item.querySelector('.progress-percent');
-
             if (progressBar) progressBar.style.width = '100%';
             if (progressPercent) progressPercent.textContent = '100%';
-
             this.textContent = t('home.btn_done_check');
 
             setTimeout(async () => {
-                if (utils.TEST){
-                    taskData = taskData.filter(d => String(d.id) !== String(data.id));
-                    item.remove();
-                    if (container.querySelectorAll('.task').length === 0)
-                        showEmptyState('noTask');
+                const found = taskData.find(d => String(d.id) === String(data.id));
+                if (found) found.is_completed = true;
+                data.is_completed = true;
+                data.difficulty_rating = data.difficulty_rating ?? 0;
+
+                item.className = `task ${data.priority} task--completed`;
+                item.innerHTML = buildCompletedCardHTML(data);
+                taskListCompleted.appendChild(item);
+                attachCompletedEvents(item, data);
+                updateCompletedDivider();
+
+                if (taskListActive.querySelectorAll('.task').length === 0)
+                    showEmptyState('noTask');
+
+                if (utils.TEST) {
+                    utils.showSuccess(t('home.msg_task_done'));
                     return;
                 }
-                try {
-                    if (data.id.toString().startsWith('tmp-')) {throw new Error('Cannot delete unsynced task');}
 
-                    const response = await utils.fetchWithAuth(
-                        `${utils.URL_API}/project/${projectId}/items/${data.id}/done`,
-                        { method: 'DELETE' },
-                        {
-                            enableQueue: true
-                        },
-                        utils.generateId(), 1
-                    );
+                if (data.id.toString().startsWith('tmp-')) {
+                    idb.getData(utils.QUEUE_STORE, data.id).then(existing => {
+                        if (!existing) return;
+                        idb.patchData(utils.QUEUE_STORE, data.id, {
+                            options: {
+                                ...existing.options,
+                                body: JSON.stringify({ ...JSON.parse(existing.options.body), is_completed: true })
+                            }
+                        });
+                    });
+                    utils.showSuccess(t('home.msg_task_done'));
+                    return;
+                }
 
-                    if (response.ok) {
-                        taskData = taskData.filter(d => String(d.id) !== String(data.id));
-                        item.remove();
-                        if (container.querySelectorAll('.task').length === 0)
-                            showEmptyState('noTask');
+                utils.fetchWithAuth(
+                    `${utils.URL_API}/project/${projectId}/items/${data.id}`,
+                    { method: 'PATCH', body: JSON.stringify({ is_completed: true }) },
+                    { enableQueue: true }
+                ).then(async res => {
+                    if (res.ok) {
                         utils.showSuccess(t('home.msg_task_done'));
                     } else {
                         utils.showError(t('home.msg_task_delete_error'));
                     }
-                } catch (err) {
-                    taskData = taskData.filter(d => String(d.id) !== String(data.id));
-                    item.remove();
-                    if (container.querySelectorAll('.task').length === 0)
-                        showEmptyState('noTask');
-                    utils.showSuccess(t('home.msg_task_done'));
-                }
+                }).catch(() => {});
             }, 400);
         });
 
@@ -464,6 +590,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         item.addEventListener('click', (e) => {
             e.stopPropagation();
             if (!panel) return;
+            if (item.classList.contains('task--completed')) return;
             const name = panel.querySelector('.detail-task-name');
             const priority = panel.querySelector('.priority-badge');
             const priority_text = panel.querySelector('.priority-badge span');
@@ -521,6 +648,40 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
             if (processValue) processValue.textContent = val + '%';
             if (processSect) processSect.classList.toggle('is-complete', val === 100);
+
+            // Difficulty rating in panel (E7/E5)
+            const panelDots = panel.querySelector('.tdp-difficulty-dots');
+            if (panelDots) {
+                renderDifficultyWidget(panelDots, data.difficulty_rating ?? 0, (rating) => {
+                    const found = taskData.find(d => String(d.id) === String(activeData.id));
+                    if (found) found.difficulty_rating = rating;
+                    activeData.difficulty_rating = rating;
+
+                    if (utils.TEST) return;
+
+                    if (activeData.id.toString().startsWith('tmp-')) {
+                        idb.getData(utils.QUEUE_STORE, activeData.id).then(existing => {
+                            if (!existing) return;
+                            idb.patchData(utils.QUEUE_STORE, activeData.id, {
+                                options: {
+                                    ...existing.options,
+                                    body: JSON.stringify({ ...JSON.parse(existing.options.body), difficulty_rating: rating })
+                                }
+                            });
+                        });
+                        return;
+                    }
+
+                    clearTimeout(difficultyDebounceTimer);
+                    difficultyDebounceTimer = setTimeout(() => {
+                        utils.fetchWithAuth(
+                            `${utils.URL_API}/project/${projectId}/items/${activeData.id}`,
+                            { method: 'PATCH', body: JSON.stringify({ difficulty_rating: rating }) },
+                            { enableQueue: true }
+                        ).catch(() => {});
+                    }, 500);
+                });
+            }
 
             openDetailPanel(panel);
         });
@@ -1132,6 +1293,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     const taskDatePicker    = new TaskDetailDatePicker();
     const filterDatePicker  = new FilterDatePicker();
 
+    let difficultyDebounceTimer = null;
+
     // ========== NOTES ==========
     const notesTextarea = document.querySelector('.notes-textarea');
     let notesDebounceTimer = null;
@@ -1248,8 +1411,9 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (!activeItem) return;
 
             if (utils.TEST) {
+                taskData = taskData.filter(d => String(d.id) !== String(activeData.id));
                 activeItem.remove();
-                if (container.querySelectorAll('.task').length === 0)
+                if (taskListActive.querySelectorAll('.task').length === 0)
                     showEmptyState('noTask');
                 closeDetailPanel(panel);
                 return;
@@ -1257,15 +1421,13 @@ document.addEventListener('DOMContentLoaded', async function() {
 
             if (activeData.id.toString().startsWith('tmp-')) {
                 await idb.deleteData(utils.QUEUE_STORE, activeData.id);
-
+                taskData = taskData.filter(d => String(d.id) !== String(activeData.id));
                 activeItem.remove();
-                if (container.querySelectorAll('.task').length === 0)
+                if (taskListActive.querySelectorAll('.task').length === 0)
                     showEmptyState('noTask');
                 closeDetailPanel(panel);
-
                 return;
             }
-
 
             try {
                 const response = await utils.fetchWithAuth(
@@ -1276,8 +1438,9 @@ document.addEventListener('DOMContentLoaded', async function() {
                 );
 
                 if (response.ok) {
+                    taskData = taskData.filter(d => String(d.id) !== String(activeData.id));
                     activeItem.remove();
-                    if (container.querySelectorAll('.task').length === 0)
+                    if (taskListActive.querySelectorAll('.task').length === 0)
                         showEmptyState('noTask');
                     closeDetailPanel(panel);
                     utils.showSuccess(t('home.msg_task_deleted'));
@@ -1295,7 +1458,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         clearTimeout(reorderDebounceTimer);
         reorderDebounceTimer = setTimeout(async () => {
             if (utils.TEST) return;
-            const tasks = [...taskList.querySelectorAll('.task')];
+            const tasks = [...taskListActive.querySelectorAll('.task')];
             const body = tasks.map((el, index) => ({
                 id: parseInt(el.dataset.id),
                 position: index + 1
@@ -1315,26 +1478,117 @@ document.addEventListener('DOMContentLoaded', async function() {
         }, 500);
     }
     
-    const taskList = container.querySelector('.task-list');
-    const taskSortable = new Sortable(taskList, {
+    const taskListActive = container.querySelector('.task-list-active');
+    const taskListCompleted = document.getElementById('task-list-completed');
+    let completedVisible = true;
+
+    function updateCompletedDivider() {
+        const divider = document.getElementById('task-section-divider');
+        const count = taskData.filter(t => t.is_completed).length;
+        if (count === 0) {
+            divider.style.display = 'none';
+            return;
+        }
+        divider.style.display = '';
+        const chevronSvg = completedVisible
+            ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>`
+            : `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>`;
+        divider.innerHTML = `
+            <div class="divider-line"></div>
+            <div class="divider-header">
+                <span class="divider-title">${t('home.completed_section_title')} (${count})</span>
+                <button class="btn-toggle-completed">${chevronSvg}</button>
+            </div>`;
+        divider.querySelector('.btn-toggle-completed').addEventListener('click', () => {
+            completedVisible = !completedVisible;
+            taskListCompleted.style.display = completedVisible ? '' : 'none';
+            updateCompletedDivider();
+        });
+    }
+
+    function crossDragPatch(id, payload) {
+        if (utils.TEST) return;
+        if (id.toString().startsWith('tmp-')) {
+            idb.getData(utils.QUEUE_STORE, id).then(existing => {
+                if (!existing) return;
+                idb.patchData(utils.QUEUE_STORE, id, {
+                    options: {
+                        ...existing.options,
+                        body: JSON.stringify({ ...JSON.parse(existing.options.body), ...payload })
+                    }
+                });
+            });
+            return;
+        }
+        utils.fetchWithAuth(
+            `${utils.URL_API}/project/${projectId}/items/${id}`,
+            { method: 'PATCH', body: JSON.stringify(payload) },
+            { enableQueue: true }
+        ).catch(() => {});
+    }
+
+    const taskSortable = new Sortable(taskListActive, {
         animation: 150,
         ghostClass: 'sortable-ghost',
         filter: '.empty-state',
         delay: 300,
         delayOnTouchOnly: true,
         touchStartThreshold: 5,
-        onEnd: function() { sendReorder(); }
+        group: { name: 'tasks', pull: true, put: true },
+        onAdd: function(evt) {
+            // completed → active (F3)
+            const el = evt.item;
+            const id = el.dataset.id;
+            const found = taskData.find(d => String(d.id) === String(id));
+            if (!found) return;
+            found.is_completed = false;
+            el.className = `task ${found.priority}`;
+            el.innerHTML = buildActiveCardHTML(found);
+            attachEvents(el, found);
+            hideEmptyState();
+            updateCompletedDivider();
+            crossDragPatch(id, { is_completed: false });
+        },
+        onEnd: function(evt) {
+            if (evt.to === taskListActive) sendReorder();
+        }
+    });
+
+    const taskSortableCompleted = new Sortable(taskListCompleted, {
+        animation: 150,
+        ghostClass: 'sortable-ghost',
+        delay: 300,
+        delayOnTouchOnly: true,
+        touchStartThreshold: 5,
+        group: { name: 'tasks', pull: true, put: true },
+        onAdd: function(evt) {
+            // active → completed (F4)
+            const el = evt.item;
+            const id = el.dataset.id;
+            const found = taskData.find(d => String(d.id) === String(id));
+            if (!found) return;
+            found.is_completed = true;
+            found.difficulty_rating = found.difficulty_rating ?? 0;
+            el.className = `task ${found.priority} task--completed`;
+            el.innerHTML = buildCompletedCardHTML(found);
+            attachCompletedEvents(el, found);
+            if (taskListActive.querySelectorAll('.task').length === 0)
+                showEmptyState('noTask');
+            updateCompletedDivider();
+            crossDragPatch(id, { is_completed: true });
+        }
     });
 
     function updateDragState() {
         const hasActive = sortConditions.length > 0 || filterConditions.length > 0;
         taskSortable.option('disabled', hasActive);
+        taskSortableCompleted.option('disabled', hasActive);
     }
 
     function reapplySortFilter() {
         if (sortConditions.length === 0 && filterConditions.length === 0) return;
 
-        const taskList = container.querySelector('.task-list');
+        const taskList = container.querySelector('.task-list-active');
 
         const visible = filterConditions.length === 0
             ? taskData.slice()
@@ -1383,21 +1637,35 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (operator === 'not_in') return !vals.includes(item.priority);
         }
         if (field === 'due_date' || field === 'start_date') {
-            const itemMs = item[field] ? new Date(item[field]).getTime() : null;
-            if (itemMs === null) return false;
+            const getLocalNum = (val) => {
+                if (!val) return null;
+                if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return parseInt(val.replace(/-/g, ''), 10);
+                const d = new Date(val);
+                if (isNaN(d.getTime())) return null;
+                return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+            };
+
             if (operator === 'between') {
-                const from = valueFrom ? new Date(valueFrom).getTime() : -Infinity;
-                const to   = valueTo   ? new Date(valueTo).getTime()   :  Infinity;
-                return itemMs >= from && itemMs <= to;
+                if (!valueFrom && !valueTo) return true;
+                const itemDate = getLocalNum(item[field]);
+                if (itemDate === null) return false;
+                const from = valueFrom ? getLocalNum(valueFrom) : -Infinity;
+                const to   = valueTo   ? getLocalNum(valueTo)   :  Infinity;
+                return itemDate >= from && itemDate <= to;
             }
-            const filterMs = value ? new Date(value).getTime() : null;
-            if (filterMs === null) return true;
-            if (operator === 'eq')     return itemMs === filterMs;
-            if (operator === 'not_eq') return itemMs !== filterMs;
-            if (operator === 'gt')     return itemMs >   filterMs;
-            if (operator === 'gte')    return itemMs >=  filterMs;
-            if (operator === 'lt')     return itemMs <   filterMs;
-            if (operator === 'lte')    return itemMs <=  filterMs;
+            
+            const filterDate = getLocalNum(value);
+            if (filterDate === null) return true;
+            
+            const itemDate = getLocalNum(item[field]);
+            if (itemDate === null) return operator === 'not_eq';
+
+            if (operator === 'eq')     return itemDate === filterDate;
+            if (operator === 'not_eq') return itemDate !== filterDate;
+            if (operator === 'gt')     return itemDate >   filterDate;
+            if (operator === 'gte')    return itemDate >=  filterDate;
+            if (operator === 'lt')     return itemDate <   filterDate;
+            if (operator === 'lte')    return itemDate <=  filterDate;
         }
         if (field === 'time_spent') {
             const itemSec = item.time_spent || 0;
@@ -1431,7 +1699,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     function compareTaskField(a, b, field, asc) {
-        const PRIORITY_ORDER = { low: 0, medium: 1, high: 2 };
+        const PRIORITY_ORDER = { high: 0, medium: 1, low: 2 };
         let cmp = 0;
         if (field === 'name') {
             const va = (a.name || '').toLowerCase();
@@ -1442,9 +1710,17 @@ document.addEventListener('DOMContentLoaded', async function() {
         } else if (field === 'time_spent') {
             cmp = (a.time_spent || 0) - (b.time_spent || 0);
         } else {
-            const ta = a[field] ? new Date(a[field]).getTime() : (asc ? Infinity : -Infinity);
-            const tb = b[field] ? new Date(b[field]).getTime() : (asc ? Infinity : -Infinity);
-            cmp = ta - tb;
+            const ta = a[field] ? new Date(a[field]).getTime() : null;
+            const tb = b[field] ? new Date(b[field]).getTime() : null;
+            if (ta === null && tb === null) {
+                cmp = 0;
+            } else if (ta === null) {
+                cmp = asc ? 1 : -1;
+            } else if (tb === null) {
+                cmp = asc ? -1 : 1;
+            } else {
+                cmp = ta - tb;
+            }
         }
         return asc ? cmp : -cmp;
     }
@@ -1468,11 +1744,11 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (emptyState) {
             if (!projectId && !utils.TEST) {
                 showEmptyState('noProject');
-            } else if (container.querySelectorAll('.task').length === 0) {
+            } else if (taskListActive.querySelectorAll('.task').length === 0) {
                 showEmptyState('noTask');
             }
         }
-    
+
         // Update calendar overlay i18n elements
         const calendarOverlay = document.getElementById('sf-cal-overlay');
         if (calendarOverlay) {
@@ -1506,19 +1782,20 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
     
         container.querySelectorAll('.task').forEach(taskEl => {
-            const taskId = taskEl.dataset.id;
             const deadlineSpan = taskEl.querySelector('.task-deadline span');
             if (deadlineSpan) {
                 const currentText = deadlineSpan.textContent;
                 const datePart = currentText.includes(':') ? currentText.split(':').pop().trim() : currentText.split(' ').pop().trim();
                 deadlineSpan.textContent = `${t('home.task_due_prefix')} ${datePart}`;
             }
-        
             const btnDone = taskEl.querySelector('.btn-done');
-            if (btnDone) {
-                btnDone.textContent = taskEl.classList.contains('completed') ? t('home.btn_done_check') : t('home.btn_done');
-            }
+            if (btnDone) btnDone.textContent = t('home.btn_done');
+            const btnRestore = taskEl.querySelector('.btn-restore');
+            if (btnRestore) btnRestore.textContent = t('home.btn_restore');
         });
+
+        // Update divider title
+        updateCompletedDivider();
     
         const panel = document.querySelector('.task-detail-panel');
         if (panel && panel.classList.contains('active') && activeData) {

@@ -1258,6 +1258,35 @@ h1 .btn-done:hover {
 }
 
 /* ── Notes Section — fills remaining space ── */
+.tdp-difficulty-section {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.tdp-difficulty-section .tdp-section-label {
+    color: var(--text-tertiary);
+}
+
+.tdp-difficulty-dots {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.tdp-difficulty-dots .difficulty-dot {
+    cursor: pointer;
+    transition: transform 0.15s;
+}
+
+.tdp-difficulty-dots .difficulty-dot:hover {
+    transform: scale(1.2);
+}
+
 .tdp-notes-section {
     background: var(--bg-tertiary);
     border: 1px solid var(--border-color);
@@ -1367,6 +1396,119 @@ h1 .btn-done:hover {
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+/* ── Completed section divider ── */
+.task-section-divider {
+    margin: 1rem 0 0.5rem;
+}
+
+.task-section-divider .divider-line {
+    height: 1px;
+    background: var(--border-color);
+    margin-bottom: 0.5rem;
+}
+
+.task-section-divider .divider-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.task-section-divider .divider-title {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.btn-toggle-completed {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    padding: 2px 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: color 0.18s ease;
+    line-height: 1;
+}
+
+.btn-toggle-completed:hover {
+    color: var(--text-secondary);
+}
+
+/* ── Completed task list ── */
+.task-list-completed {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    justify-content: start;
+}
+
+/* ── Completed task card ── */
+.task--completed {
+    opacity: 0.55;
+    filter: grayscale(30%);
+    cursor: default;
+    min-height: auto;
+}
+
+.task--completed:hover {
+    transform: none;
+    box-shadow: var(--shadow-md);
+}
+
+.btn-restore {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.18s ease;
+    flex-shrink: 0;
+}
+
+.btn-restore:hover {
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+    background: rgba(99, 102, 241, 0.08);
+}
+
+/* ── Difficulty rating dots ── */
+.task-difficulty {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding-top: 2px;
+}
+
+.difficulty-label {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-right: 2px;
+    white-space: nowrap;
+}
+
+.difficulty-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--border-color);
+    transition: background 0.15s ease;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.difficulty-dot.active {
+    background: var(--accent-primary);
 }
 
 /* Date Picker Button in Task Detail */
