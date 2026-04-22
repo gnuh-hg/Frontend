@@ -3,7 +3,7 @@ import { t } from './i18n.js';
 
 const URL_API = "https://backend-u1p2.onrender.com";
 const QUEUE_STORE = "offlinequeue";
-const TEST = false; // Bật cờ này để test offline queue (bỏ qua lỗi mạng, luôn enqueue)
+const TEST = true; // Bật cờ này để test offline queue (bỏ qua lỗi mạng, luôn enqueue)
 let _loadingCount = 0;
 let _loadingTimer = null;
 

@@ -117,6 +117,7 @@
     "btn_done": "Hoàn thành",
     "btn_done_check": "✓ Xong",
     "task_due_prefix": "Hạn:",
+    "overdue_badge": "Quá hạn",
     "msg_select_project": "Vui lòng chọn một dự án trước!",
     "msg_task_create_error": "Lỗi khi tạo nhiệm vụ",
     "msg_task_delete_error": "Lỗi khi xóa nhiệm vụ",
@@ -533,7 +534,18 @@
     "msg_created": "Đã tạo roadmap!",
     "msg_deleted": "Đã xóa roadmap",
     "msg_renamed": "Đã đổi tên roadmap",
-    "components": "Cây thư mục"
+    "components": "Cây thư mục",
+    "ai_btn": "AI Trợ lý",
+    "ai_placeholder": "Ví dụ: Đổi màu các node thành màu xanh…",
+    "ai_send_aria": "Gửi",
+    "ai_thinking": "AI đang xử lý…",
+    "ai_error": "Có lỗi khi kết nối AI. Vui lòng thử lại.",
+    "ai_preview_save": "Lưu thay đổi",
+    "ai_preview_cancel": "Hủy",
+    "ai_preview_label": "Xem trước thay đổi AI",
+    "ai_save_ok": "Đã lưu thay đổi vào roadmap.",
+    "ai_save_fail": "Lưu thất bại. Vui lòng thử lại.",
+    "ai_busy": "Hãy Lưu hoặc Hủy preview hiện tại trước."
   },
   "sidebar": {
     "nav_home": "Trang chủ",

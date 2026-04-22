@@ -2114,3 +2114,57 @@ h1 .btn-done:hover {
         justify-content: center;
     }
 }
+
+/* ==========================================================================
+   OVERDUE TASK INDICATOR
+   ========================================================================== */
+
+.task--overdue {
+    border-left-color: var(--accent-danger) !important;
+    box-shadow: var(--shadow-md), -2px 0 8px rgba(239, 68, 68, 0.2);
+}
+
+.task-deadline.overdue {
+    color: var(--accent-danger);
+}
+
+.task-deadline.overdue span {
+    color: var(--accent-danger);
+    font-weight: 600;
+}
+
+.task-deadline.overdue svg rect,
+.task-deadline.overdue svg line {
+    stroke: var(--accent-danger);
+}
+
+.overdue-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 1px 6px;
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--accent-danger);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    flex-shrink: 0;
+    margin-left: 2px;
+}
+
+@media (max-width: 768px) {
+    .task--overdue .task-deadline {
+        display: flex;
+    }
+
+    .task--overdue .task-deadline svg,
+    .task--overdue .task-deadline span {
+        display: none;
+    }
+
+    .task--overdue .task-deadline .overdue-badge {
+        display: inline-flex;
+    }
+}

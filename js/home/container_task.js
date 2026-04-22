@@ -386,7 +386,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     function renderActiveItem(item) {
         hideEmptyState();
         const el = document.createElement('div');
-        el.className = `task ${item.priority}`;
+        el.className = `task ${item.priority}${isOverdue(item.due_date) ? ' task--overdue' : ''}`;
         el.dataset.id = item.id;
         el.innerHTML = buildActiveCardHTML(item);
         taskListActive.appendChild(el);
@@ -411,12 +411,16 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     function buildActiveCardHTML(item) {
         const progress = item.progress ?? 0;
+        const overdue = isOverdue(item.due_date);
+        const overdueBadge = overdue
+            ? `<span class="overdue-badge">${t('home.overdue_badge')}</span>`
+            : '';
         return `
             <div class="task-header">
                 <div class="task-name">${item.name}</div>
                 <button class="btn-done">${t('home.btn_done')}</button>
             </div>
-            <div class="task-deadline">${CALENDAR_SVG}<span>${t('home.task_due_prefix')} ${showDate(item.due_date)}</span></div>
+            <div class="task-deadline${overdue ? ' overdue' : ''}">${CALENDAR_SVG}<span>${t('home.task_due_prefix')} ${showDate(item.due_date)}</span>${overdueBadge}</div>
             <div class="task-progress${progress === 100 ? ' progress-full' : ''}">
                 <div class="progress-bar-container"><div class="progress-bar-fill" style="width: ${progress}%"></div></div>
                 <span class="progress-percent">${progress}%</span>
@@ -1167,8 +1171,25 @@ document.addEventListener('DOMContentLoaded', async function() {
                 activeData.due_date = date.toISOString();
                 reapplySortFilter();
                 const item = document.querySelector(`.task[data-id="${activeData.id}"]`);
-                if (item) item.querySelector('.task-deadline span').textContent =
-                    `${t('home.task_due_prefix')} ${formatted}`;
+                if (item) {
+                    item.querySelector('.task-deadline span').textContent =
+                        `${t('home.task_due_prefix')} ${formatted}`;
+                    const overdue = isOverdue(activeData.due_date);
+                    item.classList.toggle('task--overdue', overdue);
+                    const deadlineDiv = item.querySelector('.task-deadline');
+                    if (deadlineDiv) {
+                        deadlineDiv.classList.toggle('overdue', overdue);
+                        const existingBadge = deadlineDiv.querySelector('.overdue-badge');
+                        if (overdue && !existingBadge) {
+                            const badge = document.createElement('span');
+                            badge.className = 'overdue-badge';
+                            badge.textContent = t('home.overdue_badge');
+                            deadlineDiv.appendChild(badge);
+                        } else if (!overdue && existingBadge) {
+                            existingBadge.remove();
+                        }
+                    }
+                }
                 document.getElementById('dueDateText').textContent = formatted;
                 document.getElementById('dueDateText').classList.remove('placeholder');
                 document.getElementById('dueDateBtn').classList.add('has-date');
@@ -1195,6 +1216,16 @@ document.addEventListener('DOMContentLoaded', async function() {
                 text.textContent = placeholder;
                 text.classList.add('placeholder');
                 document.getElementById('dueDateBtn').classList.remove('has-date');
+                const taskEl = document.querySelector(`.task[data-id="${activeData.id}"]`);
+                if (taskEl) {
+                    taskEl.classList.remove('task--overdue');
+                    const deadlineDiv = taskEl.querySelector('.task-deadline');
+                    if (deadlineDiv) {
+                        deadlineDiv.classList.remove('overdue');
+                        const badge = deadlineDiv.querySelector('.overdue-badge');
+                        if (badge) badge.remove();
+                    }
+                }
             }
             this._syncBackend();
         }
@@ -1803,6 +1834,15 @@ document.addEventListener('DOMContentLoaded', async function() {
         return `${d}/${m}/${y}`;
     }
 
+    function isOverdue(due_date) {
+        if (!due_date) return false;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const due = new Date(due_date);
+        due.setHours(0, 0, 0, 0);
+        return due < today;
+    }
+
     window.addEventListener('langChanged', function() {
         const h1 = container.querySelector('h1');
         if (h1 && h1.style.display !== 'none') {
@@ -1858,6 +1898,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                 const datePart = currentText.includes(':') ? currentText.split(':').pop().trim() : currentText.split(' ').pop().trim();
                 deadlineSpan.textContent = `${t('home.task_due_prefix')} ${datePart}`;
             }
+            const badge = taskEl.querySelector('.overdue-badge');
+            if (badge) badge.textContent = t('home.overdue_badge');
             const btnDone = taskEl.querySelector('.btn-done');
             if (btnDone) btnDone.textContent = t('home.btn_done');
             const btnRestore = taskEl.querySelector('.btn-restore');

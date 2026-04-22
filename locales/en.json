@@ -117,6 +117,7 @@
     "btn_done": "Done",
     "btn_done_check": "✓ Done",
     "task_due_prefix": "Due:",
+    "overdue_badge": "Overdue",
     "msg_select_project": "Please select a project first!",
     "msg_task_create_error": "Error creating task",
     "msg_task_delete_error": "Error while deleting task",
@@ -474,7 +475,18 @@
     "msg_created": "Roadmap created!",
     "msg_deleted": "Roadmap deleted",
     "msg_renamed": "Roadmap renamed",
-    "components": "Folder tree"
+    "components": "Folder tree",
+    "ai_btn": "AI Assistant",
+    "ai_placeholder": "E.g.: Change node colors to blue…",
+    "ai_send_aria": "Send",
+    "ai_thinking": "AI is processing…",
+    "ai_error": "Connection error. Please try again.",
+    "ai_preview_save": "Save changes",
+    "ai_preview_cancel": "Cancel",
+    "ai_preview_label": "AI Preview",
+    "ai_save_ok": "Changes saved.",
+    "ai_save_fail": "Save failed. Please try again.",
+    "ai_busy": "Please save or cancel the current preview first."
   },
   "sidebar": {
     "nav_home": "Home",
