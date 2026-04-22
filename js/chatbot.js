@@ -1665,3 +1665,211 @@ function fmtDate(str) {
 function sleep(ms) {
     return new Promise(r => setTimeout(r, ms));
 }
+
+
+// ══════════════════════════════════════════════════════════════════════════
+// DEADLINE SUMMARY FEATURE
+// ══════════════════════════════════════════════════════════════════════════
+ 
+async function checkDeadlineSummary() {
+    const todayKey = `manask_deadline_checked_${getTodayKey()}`;
+    if (localStorage.getItem(todayKey)) return;
+ 
+    try {
+        const deadlines = await fetchDeadlineTasks();
+        const { urgent, soon, overdue } = deadlines;
+        if (urgent.length + soon.length + overdue.length === 0) return;
+        localStorage.setItem(todayKey, '1');
+        renderDeadlineBanner(deadlines);
+    } catch (err) {
+        console.warn('[Deadline] checkDeadlineSummary error:', err);
+    }
+}
+ 
+function getTodayKey() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+ 
+async function fetchDeadlineTasks() {
+    try {
+        const token = localStorage.getItem('access_token');
+        const res = await fetch(`${API}/chatbot/deadline-summary`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) return await res.json();
+    } catch { /* ignore */ }
+    return { urgent: [], soon: [], overdue: [] };
+}
+ 
+function classifyDeadlineTasks(tasks) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+ 
+    const urgent = [], soon = [], overdue = [];
+ 
+    for (const task of tasks) {
+        if (!task.due_date) continue;
+        const progress = task.progress ?? task.process ?? 0;
+        if (progress >= 100) continue;
+ 
+        const due = new Date(task.due_date);
+        due.setHours(0, 0, 0, 0);
+        const diffDays = Math.floor((due - today) / (1000 * 60 * 60 * 24));
+ 
+        if (diffDays < 0)       overdue.push(task);
+        else if (diffDays <= 2) urgent.push(task);
+        else if (diffDays <= 7) soon.push(task);
+    }
+ 
+    return { urgent, soon, overdue };
+}
+ 
+function buildDeadlinePrompt(deadlines) {
+    const { urgent, soon, overdue } = deadlines;
+    const lines = ['Hãy phân tích tình trạng deadline của tôi và đưa ra giải pháp cụ thể:'];
+ 
+    if (overdue.length) {
+        lines.push(`\n⚠️ Task trễ hạn (${overdue.length}):`);
+        overdue.forEach(t => lines.push(`  - ${t.name} (hạn: ${fmtDate(t.due_date)}, tiến độ: ${t.progress ?? t.process ?? 0}%)`));
+    }
+    if (urgent.length) {
+        lines.push(`\n🔥 Task cần hoàn thành gấp trong 0-2 ngày (${urgent.length}):`);
+        urgent.forEach(t => lines.push(`  - ${t.name} (hạn: ${fmtDate(t.due_date)}, tiến độ: ${t.progress ?? t.process ?? 0}%)`));
+    }
+    if (soon.length) {
+        lines.push(`\n⏰ Task sắp đến hạn trong 3-7 ngày (${soon.length}):`);
+        soon.forEach(t => lines.push(`  - ${t.name} (hạn: ${fmtDate(t.due_date)}, tiến độ: ${t.progress ?? t.process ?? 0}%)`));
+    }
+ 
+    lines.push('\nGợi ý cho tôi thứ tự ưu tiên và cách phân bổ thời gian hợp lý.');
+    return lines.join('\n');
+}
+ 
+function renderDeadlineBanner(deadlines) {
+    const { urgent, soon, overdue } = deadlines;
+ 
+    let icon, text, variant;
+    if (overdue.length > 0) {
+        icon = '⚠️'; text = `Bạn có ${overdue.length} task đã trễ hạn`; variant = 'overdue';
+    } else if (urgent.length + soon.length >= 3) {
+        icon = '🔥'; text = `Bạn có ${urgent.length + soon.length} task deadline trong 3 ngày`; variant = 'urgent';
+    } else {
+        icon = '⏰'; text = `Bạn có ${urgent.length + soon.length} task sắp đến hạn`; variant = 'soon';
+    }
+ 
+    document.getElementById('cb-deadline-banner')?.remove();
+ 
+    const banner = document.createElement('div');
+    banner.id = 'cb-deadline-banner';
+    banner.className = `cb-deadline-banner cb-deadline-banner--${variant}`;
+    banner.innerHTML = `
+        <div class="cb-deadline-banner-left">
+            <span class="cb-deadline-banner-icon">${icon}</span>
+            <span class="cb-deadline-banner-text">${escHtml(text)}</span>
+        </div>
+        <div class="cb-deadline-banner-actions">
+            <button class="cb-deadline-btn-solve" type="button">Xem giải pháp</button>
+            <button class="cb-deadline-btn-close" type="button" title="Đóng">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+        </div>`;
+ 
+    const app = document.getElementById('cb-app') || thread?.parentElement;
+    if (app) app.insertBefore(banner, app.firstChild);
+ 
+    banner.querySelector('.cb-deadline-btn-close').addEventListener('click', () => banner.remove());
+ 
+    banner.querySelector('.cb-deadline-btn-solve').addEventListener('click', async () => {
+        banner.remove();
+        const prompt = buildDeadlinePrompt(deadlines);
+        inputEl.value = prompt;
+        await sendMessage(prompt);
+        inputEl.value = '';
+        inputEl.style.height = 'auto';
+    });
+}
+ 
+function buildDeadlineQuickActions() {
+    const actions = [
+        { label: '📋 Tóm tắt tiến độ toàn bộ',  prompt: 'Tóm tắt tiến độ tổng thể của tôi hiện tại' },
+        { label: '🔍 Lọc task cần làm ngay',       prompt: 'Hiện tất cả task chưa hoàn thành có deadline trong tuần này' },
+        { label: '⏱ Phân bổ thời gian hôm nay',   prompt: 'Gợi ý lịch làm việc hôm nay để kịp các deadline sắp tới' },
+    ];
+ 
+    const wrap = document.createElement('div');
+    wrap.className = 'cb-deadline-quick-actions';
+ 
+    actions.forEach(({ label, prompt }) => {
+        const btn = document.createElement('button');
+        btn.className = 'cb-deadline-quick-btn';
+        btn.textContent = label;
+        btn.addEventListener('click', async () => {
+            wrap.remove();
+            await sendMessage(prompt);
+        });
+        wrap.appendChild(btn);
+    });
+ 
+    return wrap;
+}
+ 
+// Inject CSS
+(function injectDeadlineStyles() {
+    if (document.getElementById('cb-deadline-styles')) return;
+    const style = document.createElement('style');
+    style.id = 'cb-deadline-styles';
+    style.textContent = `
+.cb-deadline-banner {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; padding: 10px 16px; border-radius: 10px;
+    margin: 10px 12px 0; font-size: 13.5px; font-weight: 500;
+    animation: cb-banner-in 0.25s ease;
+}
+@keyframes cb-banner-in {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.cb-deadline-banner--overdue {
+    background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5;
+}
+.cb-deadline-banner--urgent {
+    background: rgba(251,146,60,0.12); border: 1px solid rgba(251,146,60,0.3); color: #fdba74;
+}
+.cb-deadline-banner--soon {
+    background: rgba(250,204,21,0.10); border: 1px solid rgba(250,204,21,0.25); color: #fde68a;
+}
+.cb-deadline-banner-left { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+.cb-deadline-banner-icon { font-size: 16px; flex-shrink: 0; }
+.cb-deadline-banner-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cb-deadline-banner-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.cb-deadline-btn-solve {
+    padding: 5px 12px; border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.08);
+    color: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer;
+    transition: background 0.15s; white-space: nowrap;
+}
+.cb-deadline-btn-solve:hover { background: rgba(255,255,255,0.15); }
+.cb-deadline-btn-close {
+    display: flex; align-items: center; justify-content: center;
+    width: 24px; height: 24px; border: none; background: transparent;
+    color: inherit; opacity: 0.6; cursor: pointer; border-radius: 4px;
+    transition: opacity 0.15s; padding: 0;
+}
+.cb-deadline-btn-close:hover { opacity: 1; }
+.cb-deadline-btn-close svg { width: 14px; height: 14px; }
+.cb-deadline-quick-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.cb-deadline-quick-btn {
+    padding: 6px 14px; border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.05);
+    color: var(--text-secondary, #a1a1aa); font-size: 12.5px;
+    cursor: pointer; transition: background 0.15s, border-color 0.15s; white-space: nowrap;
+}
+.cb-deadline-quick-btn:hover {
+    background: rgba(99,102,241,0.15); border-color: rgba(99,102,241,0.4); color: #818cf8;
+}`;
+    document.head.appendChild(style);
+})();
+ 

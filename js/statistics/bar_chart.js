@@ -284,7 +284,8 @@ function renderBarChart() {
 
     const labelDiv = document.createElement('div');
     labelDiv.className = 'bar-col-label';
-    labelDiv.textContent = label;
+    const labelStep = n > 20 ? 5 : n > 10 ? 3 : 1;
+    if (i % labelStep === 0 || i === n - 1) labelDiv.textContent = label;
     col.appendChild(labelDiv);
 
     wrap.appendChild(col);
