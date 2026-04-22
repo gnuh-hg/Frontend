@@ -139,6 +139,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             taskData = items;
             if (items.length === 0) {
                 showEmptyState('noTask');
+                updateCompletedDivider();
             } else {
                 hideEmptyState();
                 items.forEach(item => renderItem(item));
@@ -604,6 +605,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             activeItem = item;
             activeData = data;
             name.value = data.name;
+            _estimateOriginalName = data.name;
             priority.classList.remove('low', 'medium', 'high');
             priority.classList.add(data.priority);
             priority_text.innerHTML = t(`home.priority_${data.priority}`);
@@ -788,7 +790,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     // ========== NAME TASK ==========
     const nameInput = document.querySelector('.detail-task-name');
     let nameDebounceTimer = null;
-    
+    let _estimateOriginalName = null;
+
     if (nameInput) {
         nameInput.addEventListener('input', async function () {
             const newName = nameInput.value.trim();
@@ -836,6 +839,73 @@ document.addEventListener('DOMContentLoaded', async function() {
                     );
                 } catch {}
             }, 500);
+        });
+    }
+
+    // ========== AI ESTIMATE DIFFICULTY ON NAME BLUR ==========
+    if (nameInput) {
+        nameInput.addEventListener('blur', async function () {
+            const newName = nameInput.value.trim();
+
+            if (
+                !newName ||
+                !activeData ||
+                newName === _estimateOriginalName ||
+                activeData.id.toString().startsWith('tmp-') ||
+                !projectId
+            ) return;
+
+            _estimateOriginalName = newName;
+
+            const panel = document.querySelector('.task-detail-panel');
+            const panelDots = panel?.querySelector('.tdp-difficulty-dots');
+            if (panelDots) panelDots.classList.add('is-estimating');
+
+            try {
+                const res = await utils.fetchWithAuth(
+                    `${utils.URL_API}/project/${projectId}/items/${activeData.id}/estimate-difficulty`,
+                    { method: 'POST' },
+                    {}
+                );
+
+                if (res.ok) {
+                    const updated = await res.json();
+                    const newRating = updated.difficulty_rating ?? 0;
+
+                    activeData.difficulty_rating = newRating;
+                    const found = taskData.find(d => String(d.id) === String(activeData.id));
+                    if (found) found.difficulty_rating = newRating;
+
+                    const currentDots = panel?.querySelector('.tdp-difficulty-dots');
+                    if (currentDots) {
+                        const fresh = currentDots.cloneNode(true);
+                        currentDots.parentNode.replaceChild(fresh, currentDots);
+
+                        renderDifficultyWidget(fresh, newRating, (rating) => {
+                            const f = taskData.find(d => String(d.id) === String(activeData.id));
+                            if (f) f.difficulty_rating = rating;
+                            activeData.difficulty_rating = rating;
+
+                            if (utils.TEST) return;
+                            if (activeData.id.toString().startsWith('tmp-')) return;
+
+                            clearTimeout(difficultyDebounceTimer);
+                            difficultyDebounceTimer = setTimeout(() => {
+                                utils.fetchWithAuth(
+                                    `${utils.URL_API}/project/${projectId}/items/${activeData.id}`,
+                                    { method: 'PATCH', body: JSON.stringify({ difficulty_rating: rating }) },
+                                    { enableQueue: true }
+                                ).catch(() => {});
+                            }, 500);
+                        });
+                    }
+                }
+            } catch (_) {
+                // offline hoặc lỗi network → im lặng
+            } finally {
+                const currentDots = panel?.querySelector('.tdp-difficulty-dots');
+                if (currentDots) currentDots.classList.remove('is-estimating');
+            }
         });
     }
 
