@@ -380,6 +380,15 @@
       "less": "Less",
       "more": "More"
     },
+    "bar": {
+      "title": "On-time Completion by Project",
+      "subtitle": "% of tasks completed on schedule",
+      "on_time": "On-time",
+      "late": "Late",
+      "no_data": "No data for this period",
+      "tasks": "tasks",
+      "pct_label": "On-time rate"
+    },
     "donut_period_week": "Last 7 days",
     "donut_period_month": "Last 30 days",
     "donut_period_year": "Last 12 months",

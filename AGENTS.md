@@ -74,7 +74,8 @@ frontend/
 │       ├── summary.js          # Số liệu tóm tắt
 │       ├── line_chart.js       # Biểu đồ đường
 │       ├── donut_chart.js      # Biểu đồ tròn
-│       └── heatmap.js          # Heatmap
+│       ├── heatmap.js          # Heatmap
+│       └── bar_chart.js        # Biểu đồ cột chồng on-time
 │
 ├── css/                        # Styles
 │   ├── base.css                # Design tokens, typography, resets
@@ -91,7 +92,8 @@ frontend/
 │       ├── summary.css
 │       ├── line_chart.css
 │       ├── donut_chart.css
-│       └── heatmap.css
+│       ├── heatmap.css
+│       └── bar_chart.css       # Styles biểu đồ cột chồng
 │
 ├── locales/                    # Bản dịch
 │   ├── en.json                 # Tiếng Anh (591 dòng)
@@ -155,6 +157,7 @@ const URL_API = "https://backend-u1p2.onrender.com";
 | GET | `/statistic/line-chart` | Dữ liệu biểu đồ đường |
 | GET | `/statistic/heatmap` | Dữ liệu heatmap |
 | GET | `/statistic/donut-chart` | Dữ liệu biểu đồ tròn |
+| GET | `/statistic/bar_chart` | Dữ liệu biểu đồ cột chồng tỷ lệ hoàn thành đúng hạn |
 | GET | `/chatbot/history` | Lịch sử hội thoại AI |
 | POST | `/chatbot` | Gửi tin nhắn AI |
 | POST | `/chatbot/save/folder-tree` | Lưu folder tree do AI tạo |

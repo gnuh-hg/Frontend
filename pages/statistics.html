@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="../css/sidebar_global.css">
 <link rel="stylesheet" href="../css/statistics/summary.css">
 <link rel="stylesheet" href="../css/statistics/line_chart.css">
+<link rel="stylesheet" href="../css/statistics/bar_chart.css">
 <link rel="stylesheet" href="../css/statistics/donut_chart.css">
 <link rel="stylesheet" href="../css/statistics/heatmap.css">
 <link rel="stylesheet" href="../css/hint_float.css">
@@ -207,6 +208,33 @@
     </div>
   </div>
 
+  <!-- SECTION 2.5 — Stacked Bar Chart: On-time Completion -->
+  <div class="card">
+    <div class="bar-section">
+      <div class="bar-header">
+        <div>
+          <div class="bar-title" data-i18n="statistics.bar.title">On-time Completion by Project</div>
+          <div class="bar-subtitle" data-i18n="statistics.bar.subtitle">% of tasks completed on schedule</div>
+        </div>
+      </div>
+
+      <div class="period-tabs" style="margin-bottom:20px">
+        <button class="period-tab bc-period-tab" onclick="switchBcPeriod('week',this)" data-i18n="statistics.period.week">Week</button>
+        <button class="period-tab bc-period-tab active" onclick="switchBcPeriod('month',this)" data-i18n="statistics.period.month">Month</button>
+        <button class="period-tab bc-period-tab" onclick="switchBcPeriod('year',this)" data-i18n="statistics.period.year">Year</button>
+      </div>
+
+      <div class="bar-chart-wrap">
+        <div class="bar-chart-inner">
+          <div class="bar-y-axis" id="bcYAxis"></div>
+          <div class="bar-columns-wrap" id="bcColumnsWrap"></div>
+        </div>
+      </div>
+
+      <div class="bar-legend" id="bcLegend"></div>
+    </div>
+  </div>
+
   <!-- SECTION 3 — Donut + Heatmap -->
   <div class="bottom-row">
 
@@ -318,6 +346,24 @@
 
 </div><!-- /.page -->
 
+<div class="bar-tooltip" id="bcTooltip">
+  <div class="bar-tt-name" id="bcTtName"></div>
+  <div class="bar-tt-row">
+    <span id="bcTtPctLabel"></span>
+    <span class="bar-tt-val" id="bcTtPct"></span>
+  </div>
+  <div class="bar-tt-row">
+    <div class="bar-tt-dot" id="bcTtDot"></div>
+    <span id="bcTtOnTimeLabel"></span>
+    <span class="bar-tt-val" id="bcTtOnTime"></span>
+  </div>
+  <div class="bar-tt-row">
+    <div class="bar-tt-dot" style="background:#ef4444"></div>
+    <span id="bcTtLateLabel"></span>
+    <span class="bar-tt-val" id="bcTtLate"></span>
+  </div>
+</div>
+
 <!-- Heatmap tooltip -->
 <div class="hm-tooltip" id="hmTooltip">
   <div class="hm-tt-date" id="hmTtDate"></div>
@@ -330,6 +376,7 @@
   import { initLineChart, switchLcPeriod } from '../js/statistics/line_chart.js';
   import { initDonut, setDonutPeriod, setDonutMetric } from '../js/statistics/donut_chart.js';
   import { initHeatmap, setHmMetric } from '../js/statistics/heatmap.js';
+  import { initBarChart, switchBcPeriod } from '../js/statistics/bar_chart.js';
   import { initStatsHint } from '../js/statistics_hint.js';
 
   const now = new Date();
@@ -343,10 +390,12 @@
   window.setDonutPeriod   = setDonutPeriod;
   window.setDonutMetric   = setDonutMetric;
   window.setHmMetric      = setHmMetric;
+  window.switchBcPeriod   = switchBcPeriod;
 
   await initSummary();
   await initLineChart();
   await initDonut();
+  await initBarChart();
   await initHeatmap();
   initStatsHint();
 </script>

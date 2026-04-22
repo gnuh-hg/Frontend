@@ -439,6 +439,15 @@
       "less": "Ít hơn",
       "more": "Nhiều hơn"
     },
+    "bar": {
+      "title": "Tỷ lệ hoàn thành đúng hạn theo dự án",
+      "subtitle": "% nhiệm vụ hoàn thành đúng tiến độ",
+      "on_time": "Đúng hạn",
+      "late": "Trễ hạn",
+      "no_data": "Không có dữ liệu cho kỳ này",
+      "tasks": "nhiệm vụ",
+      "pct_label": "Tỷ lệ đúng hạn"
+    },
     "donut_period_week": "7 ngày qua",
     "donut_period_month": "30 ngày qua",
     "donut_period_year": "12 tháng qua",
