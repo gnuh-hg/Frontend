@@ -81,23 +81,21 @@
             return null;
         }
 
-        async function saveAIData(type, data) {
-            const endpoint = type === 'folder_tree'
-                ? `${utils.URL_API}/chatbot/save/folder-tree`
-                : `${utils.URL_API}/chatbot/save/roadmap`;
-            const res = await _aiFetch(endpoint, {
+        async function saveRoadmap(data) {
+            const res = await _aiFetch(`${utils.URL_API}/chatbot/save/roadmap`, {
                 method: 'POST',
                 body: JSON.stringify(data),
             });
             if (!res.ok) throw new Error('save failed');
         }
 
-        // ── 1. POST /chatbot (dùng _aiFetch, 180s timeout) ────────────
+        // ── 1. POST /chatbot — chèn marker [ROADMAP_CONTEXT]{} để FORCE roadmap mode
+        const fullMsg = `[ROADMAP_CONTEXT]{}[/ROADMAP_CONTEXT]\n${text.trim()}`;
         let postRes;
         try {
             postRes = await _aiFetch(`${utils.URL_API}/chatbot`, {
                 method: 'POST',
-                body: JSON.stringify({ message: text.trim() }),
+                body: JSON.stringify({ message: fullMsg }),
             });
         } catch (err) {
             utils.showError(t('hints.intent_error'));
@@ -112,31 +110,27 @@
         let aiMsg = null;
         try { aiMsg = extractAIMessage(await postRes.json()); } catch { /* body empty */ }
 
-        if (!aiMsg || !aiMsg.type || !aiMsg.data) {
+        if (!aiMsg || aiMsg.type !== 'roadmap' || !aiMsg.data) {
             utils.showError(t('hints.intent_error'));
             return;
         }
 
-        // ── 3. Auto-save ──────────────────────────────────────────────
+        // ── 3. Auto-save roadmap ──────────────────────────────────────
         try {
-            await saveAIData(aiMsg.type, aiMsg.data);
+            await saveRoadmap(aiMsg.data);
         } catch {
             utils.showError(t('hints.intent_error'));
             return;
         }
 
-        // ── 4. Đếm folder và thông báo ────────────────────────────────
-        let folderCount = 0;
-        if (aiMsg.type === 'roadmap') {
-            folderCount = Object.values(aiMsg.data.nodes || {})
-                .filter(n => n.item?.type === 'FOLDER').length;
-        } else {
-            folderCount = (aiMsg.data.tree || [])
-                .filter(i => i.type === 'FOLDER').length;
-        }
+        // ── 4. Đếm folder + thông báo + reload để render lại sidebar ──
+        const folderCount = Object.values(aiMsg.data.nodes || {})
+            .filter(n => n.item?.type === 'FOLDER').length;
 
         utils.showSuccess(t('hints.intent_folders_done', { n: folderCount }));
         document.dispatchEvent(new CustomEvent('projectUpdated', { detail: {} }));
+        // Reload sau 1.5s để toast hiển thị xong → sidebar/folder tree refresh từ server
+        setTimeout(() => window.location.reload(), 1500);
     }
 
     // ── Show card ───────────────────────────────────────────────────────────
