@@ -1,4 +1,8 @@
-(function () {
+import { initI18n, setLang, getLang } from '../i18n.js';
+
+document.addEventListener('DOMContentLoaded', async () => {
+    await initI18n();
+
     const searchInput = document.getElementById('help-search');
     const faqItems = document.querySelectorAll('.faq-item');
     const tabs = document.querySelectorAll('.help-tab');
@@ -23,15 +27,11 @@
 
             if (matchesCategory && matchesSearch) {
                 showItem(item);
-                if (query) {
-                    item.classList.add('open');
-                }
+                if (query) item.classList.add('open');
                 visibleCount++;
             } else {
                 hideItem(item);
-                if (query) {
-                    item.classList.remove('open');
-                }
+                if (query) item.classList.remove('open');
             }
         });
 
@@ -59,4 +59,25 @@
             item.classList.toggle('open');
         });
     });
-})();
+
+    // ── Lang switcher ──
+    function syncLangButtons() {
+        const lang = getLang();
+        document.querySelectorAll('.lang-switcher button').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.lang === lang);
+        });
+    }
+    syncLangButtons();
+
+    document.querySelectorAll('.lang-switcher button').forEach(btn => {
+        btn.addEventListener('click', () => {
+            setLang(btn.dataset.lang);
+            syncLangButtons();
+        });
+    });
+
+    // Re-run filter after i18n re-renders DOM text so search stays in sync
+    window.addEventListener('langChanged', () => {
+        applyFilter();
+    });
+});
