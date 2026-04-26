@@ -279,11 +279,13 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 40px;
+  padding: 40px 48px;
   border-top: 1px solid var(--border-color);
-  font-size: 12px;
+  font-size: .85rem;
   color: var(--text-tertiary);
 }
+
+.help-footer strong { color: var(--text-secondary); }
 
 /* ── Responsive ── */
 @media (max-width: 600px) {

@@ -626,8 +626,6 @@
     "tab_statistics": "Statistics",
     "tab_account": "Account",
     "empty_state": "No matching questions found.",
-    "footer_copyright": "© 2026 <strong>Manask</strong> — Team 2T - Plain Sailing",
-    "footer_built": "Built for <strong>AI Young Guru · FPT</strong>",
     "q_start_1": "How do I get started with Manask?",
     "a_start_1": "<p>Manask organises work in 3 levels: <strong>Folder → Project → Task</strong>. Open the folder panel on the right, click <strong>“Create new”</strong> to add a Folder, then create a Project inside the Folder, and finally add Tasks to the Project. That's the basic flow for managing all of your work.</p>",
     "q_start_2": "What's the difference between a Folder and a Project?",
