@@ -40,11 +40,37 @@
 
         await initI18n();
 
+    async function _aiFetch(url, options = {}, timeoutMs = 180000) {
+        const token      = localStorage.getItem('access_token');
+        const controller = new AbortController();
+        const timeoutId  = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+            const res = await fetch(url, {
+                ...options,
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                    ...options.headers,
+                },
+                signal: controller.signal,
+            });
+            clearTimeout(timeoutId);
+            if (res.status === 401) {
+                localStorage.removeItem('access_token');
+                window.location.href = '/pages/auth.html';
+                throw new Error('Unauthorized');
+            }
+            return res;
+        } catch (err) {
+            clearTimeout(timeoutId);
+            if (err.name === 'AbortError') throw new Error('AI timeout');
+            throw err;
+        }
+    }
+
     // ── onSubmit handler ────────────────────────────────────────────────────
     async function onSubmit(text) {
         utils.showInfo(t('hints.intent_thinking'));
-
-        const token = localStorage.getItem('access_token');
 
         // ── helpers ──────────────────────────────────────────────────
         function extractAIMessage(data) {
@@ -55,60 +81,36 @@
             return null;
         }
 
-        async function pollAI(maxAttempts = 15, intervalMs = 2000) {
-            for (let i = 0; i < maxAttempts; i++) {
-                if (i > 0) await new Promise(r => setTimeout(r, intervalMs));
-                try {
-                    const r = await fetch(`${utils.URL_API}/chatbot`, {
-                        headers: { Authorization: `Bearer ${token}` },
-                    });
-                    if (!r.ok) continue;
-                    const msg = extractAIMessage(await r.json());
-                    if (msg) return msg;
-                } catch { /* network blip — retry */ }
-            }
-            return null;
-        }
-
         async function saveAIData(type, data) {
             const endpoint = type === 'folder_tree'
                 ? `${utils.URL_API}/chatbot/save/folder-tree`
                 : `${utils.URL_API}/chatbot/save/roadmap`;
-            const res = await fetch(endpoint, {
+            const res = await _aiFetch(endpoint, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                 body: JSON.stringify(data),
             });
             if (!res.ok) throw new Error('save failed');
         }
 
-        // ── 1. POST /chatbot ──────────────────────────────────────────
+        // ── 1. POST /chatbot (dùng _aiFetch, 180s timeout) ────────────
         let postRes;
         try {
-            postRes = await fetch(`${utils.URL_API}/chatbot`, {
+            postRes = await _aiFetch(`${utils.URL_API}/chatbot`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                 body: JSON.stringify({ message: text.trim() }),
             });
-        } catch {
+        } catch (err) {
             utils.showError(t('hints.intent_error'));
-            throw new Error('network error');
+            throw err;
         }
-
         if (!postRes.ok) {
-            if (postRes.status === 401) {
-                localStorage.removeItem('access_token');
-                window.location.href = '/pages/auth.html';
-                return;
-            }
             utils.showError(t('hints.intent_error'));
             throw new Error('POST /chatbot failed');   // giữ card alive để retry
         }
 
-        // ── 2. Lấy AI message (từ POST response hoặc poll) ────────────
+        // ── 2. Lấy AI message inline từ POST response ─────────────────
         let aiMsg = null;
         try { aiMsg = extractAIMessage(await postRes.json()); } catch { /* body empty */ }
-        if (!aiMsg) aiMsg = await pollAI();
 
         if (!aiMsg || !aiMsg.type || !aiMsg.data) {
             utils.showError(t('hints.intent_error'));

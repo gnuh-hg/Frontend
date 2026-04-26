@@ -275,9 +275,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (IS_TEST) _mountTestBanner();
     setupEvents();
     setupResizer();
-    // Chỉ load items (không load history — chat không lưu lịch sử)
-    await loadItems();
-    renderThread();
+    // Load items + history song song
+    await Promise.all([loadItems(), loadHistory()]);
+    // loadHistory() đã tự gọi renderThread() ở cuối
 
     onLangChange(() => {
         // Welcome screen visible → re-render (rebuilds chips + card titles too)
