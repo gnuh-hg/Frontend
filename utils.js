@@ -1,10 +1,14 @@
 import * as idb from './idb.js';
 import { t } from './i18n.js';
 
+const URL_API     = "https://backend-u1p2.onrender.com";
+const QUEUE_STORE = "offlinequeue";
+const TEST        = false;
+
 // ── PREEMPTIVE WARM-UP ───────────────────────────────────────────────────────
 // Ngay khi module load, ping /health để thức server dậy trước.
 // fetchWithAuth (GET) sẽ đợi warm-up xong rồi mới gửi request thật.
-// → User thấy loading spinner, không thấy error.
+// → User thấy loading spinner thay vì error khi server cold start.
 let _serverReady = false;
 
 const _warmupPromise = (async () => {
@@ -21,9 +25,6 @@ const _warmupPromise = (async () => {
 })();
 // ─────────────────────────────────────────────────────────────────────────────
 
-
-const QUEUE_STORE = "offlinequeue";
-const TEST = false; // Bật cờ này để test offline queue (bỏ qua lỗi mạng, luôn enqueue)
 let _loadingCount = 0;
 let _loadingTimer = null;
 
