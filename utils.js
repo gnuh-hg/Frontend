@@ -1,7 +1,27 @@
 import * as idb from './idb.js';
 import { t } from './i18n.js';
 
-const URL_API = "https://backend-u1p2.onrender.com";
+// ── PREEMPTIVE WARM-UP ───────────────────────────────────────────────────────
+// Ngay khi module load, ping /health để thức server dậy trước.
+// fetchWithAuth (GET) sẽ đợi warm-up xong rồi mới gửi request thật.
+// → User thấy loading spinner, không thấy error.
+let _serverReady = false;
+
+const _warmupPromise = (async () => {
+    try {
+        const ctrl  = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 60000);
+        await fetch(`${URL_API}/health`, { method: 'GET', signal: ctrl.signal });
+        clearTimeout(timer);
+        _serverReady = true;
+    } catch {
+        // Nếu /health fail, các request thật sẽ tự xử lý lỗi của chúng
+        _serverReady = false;
+    }
+})();
+// ─────────────────────────────────────────────────────────────────────────────
+
+
 const QUEUE_STORE = "offlinequeue";
 const TEST = false; // Bật cờ này để test offline queue (bỏ qua lỗi mạng, luôn enqueue)
 let _loadingCount = 0;
@@ -157,6 +177,19 @@ const _TOAST_STYLES = {
 };
 let _toastContainer = null;
 
+// Dedup: ngăn cùng một toast xuất hiện nhiều lần trong 8 giây
+// (xảy ra khi nhiều request song song cùng fail — ví dụ Home load items + tasks + filter)
+const _shownToastKeys = new Map(); // key → timestamp
+const TOAST_DEDUP_MS  = 8000;
+
+function _isDuplicateToast(key) {
+    const now  = Date.now();
+    const last = _shownToastKeys.get(key) || 0;
+    if (now - last < TOAST_DEDUP_MS) return true;
+    _shownToastKeys.set(key, now);
+    return false;
+}
+
 function _getToastContainer() {
     if (!_toastContainer || !document.body.contains(_toastContainer)) {
         _toastContainer = document.createElement('div');
@@ -294,7 +327,13 @@ export async function fetchWithAuth(url, options = {}, queueOptions = {}, key = 
     const startLoading = onLoadStart ?? showLoading;
     const endLoading   = onLoadEnd   ?? hideLoading;
 
-    if (!options.method || options.method === 'GET') startLoading();
+    if (!options.method || options.method === 'GET') {
+        startLoading();
+        // Đợi server warm-up xong trước khi gửi request thật.
+        // Nếu server đã sẵn sàng → resolve ngay (<1ms), không cần chờ.
+        // Nếu server đang ngủ → đợi /health respond (30-50s) → request thật gửi sau.
+        if (!_serverReady) await _warmupPromise;
+    }
     let didHideLoading = false;
 
     const safeHideLoading = () => {
@@ -312,7 +351,9 @@ export async function fetchWithAuth(url, options = {}, queueOptions = {}, key = 
         };
 
         const controller = new AbortController();
-        const timeoutMs = i === 0 ? 10000 : 30000;
+        // Render free tier cold start có thể mất tới 50s.
+        // Dùng 55s cho lần đầu, 60s cho các lần retry.
+        const timeoutMs = i === 0 ? 55000 : 60000;
         const timer = setTimeout(() => controller.abort(), timeoutMs);
 
         try {
@@ -381,7 +422,15 @@ export async function fetchWithAuth(url, options = {}, queueOptions = {}, key = 
         }
                 // ───────────────────────────────────────────────────────────
 
-                showWarning(t('utils.connection_unstable'));
+                // Phân biệt cold start (server chưa thức) vs mất mạng thật
+                const isColdStart = error.name === 'AbortError' && navigator.onLine;
+                const toastKey    = isColdStart ? 'cold_start' : 'connection_unstable';
+                const toastMsg    = isColdStart
+                    ? (t('utils.server_starting') || 'Server đang khởi động (~30s). Vui lòng thử lại.')
+                    : t('utils.connection_unstable');
+
+                // Dedup: không hiện cùng một warning 3 lần liên tiếp
+                if (!_isDuplicateToast(toastKey)) showWarning(toastMsg);
                 throw error;
             }
         }
@@ -492,5 +541,28 @@ window.addEventListener("online", () => {
 });
 
 if (navigator.onLine) flushQueue();
+
+// ── KEEP-ALIVE ──────────────────────────────────────────────────────────────
+// Render free tier spin down sau 15 phút không có request.
+// Ping nhẹ mỗi 14 phút để giữ server luôn thức khi user đang dùng app.
+const _KEEPALIVE_INTERVAL_MS = 14 * 60 * 1000; // 14 phút
+
+function _keepAlive() {
+    if (!navigator.onLine) return;
+    const token = localStorage.getItem('access_token');
+    if (!token) return; // Chỉ ping khi đã đăng nhập
+
+    const ctrl = new AbortController();
+    setTimeout(() => ctrl.abort(), 5000); // Timeout 5s cho ping
+
+    fetch(`${URL_API}/user-id`, {
+        method : 'GET',
+        headers: { Authorization: `Bearer ${token}` },
+        signal : ctrl.signal,
+    }).catch(() => {}); // Silent — chỉ để giữ server thức, không cần handle response
+}
+
+setInterval(_keepAlive, _KEEPALIVE_INTERVAL_MS);
+// ────────────────────────────────────────────────────────────────────────────
 
 export { URL_API, TEST, QUEUE_STORE };
